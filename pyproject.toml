@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "diffsync-cli"
+version = "1.0.0"
+description = "A CLI tool for diffing and syncing files using DiffSync."
+authors = [
+    { name = "DiffSync Team", email = "team@example.com" }
+]
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+dependencies = [
+    "rich>=13.0.0"
+]
+
+[project.urls]
+Homepage = "https://github.com/your-org/diffsync"
+Repository = "https://github.com/your-org/diffsync"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["diffsync_cli*"]
+
+[project.scripts]
+diffsync = "diffsync_cli.cli:main"

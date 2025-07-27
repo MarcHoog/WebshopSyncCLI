@@ -1,0 +1,48 @@
+[
+  {
+    "name": "Fake Article 1",
+    "article_number": "1",
+    "content": "This is a mock article",
+    "description": "This is a mock article description.",
+    "package": "Kartonnen doos",
+    "categories": [
+      "TESTING_CATEGORY_1",
+      "TESTING_CATEGORY_2",
+      "INTERNAL_DIFFSYNC_MOCK"
+    ],
+    "photos": [
+      {
+        "path": "data/ccv_shop/articles/default_image.png",
+        "alttext": "Default Picture of a Cute dog"
+      }
+    ]
+  },
+  {
+    "name": "Fake Article 2",
+    "article_number": "2",
+    "content": "This is a mock article",
+    "description": "This is a mock article description.",
+    "package": "Kartonnen Doos",
+    "categories": [
+      "TESTING_CATEGORY_1",
+      "TESTING_CATEGORY_2",
+      "INTERNAL_DIFFSYNC_MOCK"
+    ],
+    "properties": {
+      "schoenmaten": ["36"],
+      "kleuren": ["wit"]
+    }
+  },
+  {
+    "name": "Fake Article 3",
+    "article_number": "3",
+    "content": "This is a mock article",
+    "description": "This is a mock article description.",
+    "package": "Kartonnen Doos",
+    "categories": [
+      "TESTING_CATEGORY_1",
+      "TESTING_CATEGORY_2",
+      "INTERNAL_DIFFSYNC_MOCK"
+    ]
+  }
+]
