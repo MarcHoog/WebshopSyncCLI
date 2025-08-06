@@ -1,6 +1,12 @@
 from diffsync import DiffSyncModel
 
 class Category(DiffSyncModel):
+    """
+    DiffSync model for a category.
+
+    Attributes:
+        name (str): The category name.
+    """
     _modelname = "category"
     _identifiers = ("name",)
     _attributes = ()
@@ -8,6 +14,12 @@ class Category(DiffSyncModel):
     name: str
 
 class Package(DiffSyncModel):
+    """
+    DiffSync model for a package.
+
+    Attributes:
+        name (str): The package name.
+    """
     _modelname = "package"
     _identifiers = ("name",)
     _attributes = ()
@@ -15,6 +27,12 @@ class Package(DiffSyncModel):
     name: str
 
 class Supplier(DiffSyncModel):
+    """
+    DiffSync model for a supplier.
+
+    Attributes:
+        name (str): The supplier name.
+    """
     _modelname = "supplier"
     _identifiers = ("name",)
     _attributes = ()
@@ -22,7 +40,13 @@ class Supplier(DiffSyncModel):
     name: str
 
 class Attribute(DiffSyncModel):
+    """
+    DiffSync model for an attribute.
 
+    Attributes:
+        name (str): The attribute name.
+        attribute_values (list): List of values for this attribute.
+    """
     _modelname = "attribute"
     _identifiers = ("name", )
     _attributes = ()
@@ -31,19 +55,36 @@ class Attribute(DiffSyncModel):
     name: str
     attribute_values: list = []
 
-
 class AttributeValue(DiffSyncModel):
+    """
+    DiffSync model for a single attribute value.
 
+    Attributes:
+        attribute (str): Identifier of the parent attribute.
+        value (str): The value string.
+    """
     _modelname = "attribute_value"
     _identifiers = ("attribute", "value")
     _attributes = ()
 
     attribute: str
-    value :str
-
+    value: str
 
 class Product(DiffSyncModel):
+    """
+    DiffSync model for a product.
 
+    Attributes:
+        name (str): Product name.
+        productnumber (str): Unique product identifier.
+        package (str): Package identifier.
+        price (int): Product price.
+        short_description (str): Brief description.
+        description (str): Full product description.
+        categories (list): Associated categories.
+        attributes (list): Associated attribute values.
+        photos (list): Associated product photos.
+    """
     _modelname = "product"
     _identifiers = ("productnumber",)
     _attributes = (
@@ -70,7 +111,13 @@ class Product(DiffSyncModel):
     photos: list = []
 
 class CategoryToDevice(DiffSyncModel):
+    """
+    DiffSync model linking a category to a product.
 
+    Attributes:
+        category_name (str): Name of the category.
+        productnumber (str): Identifier of the product.
+    """
     _modelname = "category_to_device"
     _identifiers = ("category_name", "productnumber")
     _attributes = ()
@@ -79,7 +126,15 @@ class CategoryToDevice(DiffSyncModel):
     productnumber: str
 
 class AttributeValueToProduct(DiffSyncModel):
+    """
+    DiffSync model linking an attribute value to a product.
 
+    Attributes:
+        productnumber (str): Identifier of the product.
+        attribute (str): Identifier of the attribute.
+        value (str): The attribute value.
+        price (int): Price override for this attribute value.
+    """
     _modelname = "attribute_value_to_product"
     _identifiers = ("productnumber", "attribute", "value")
     _attributes = ("price",)
@@ -89,12 +144,21 @@ class AttributeValueToProduct(DiffSyncModel):
     value: str
     price: int = 0
 
-
 class ProductPhoto(DiffSyncModel):
+    """
+    DiffSync model for a product photo.
 
+    Attributes:
+        name (str): Photo filename.
+        file_type (str): File extension/type.
+        productnumber (str): Identifier of the product.
+        source (str): URL or path to the photo.
+        alttext (str): Alternate text for the photo.
+        is_main (bool): Flag indicating if this is the main photo.
+    """
     _model = "product_photo"
     _identifiers = ("productnumber", "name", "file_type")
-    _attributes = ("alttext", "source", "is_main" )
+    _attributes = ("alttext", "source", "is_main")
 
     name: str
     file_type: str

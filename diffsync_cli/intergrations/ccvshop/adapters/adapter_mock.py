@@ -28,11 +28,12 @@ class MockAdapter(Adapter):
         if not mock_file_path:
             mock_file_path = cfg.get("MOCK_FILE_PATH")
 
-        self.cfg = cfg
 
         if not mock_file_path:
             raise ValueError("Expected `MOCK_FILE_PATH` to exist in config")
 
+
+        self.cfg = cfg
         self.mock_file_path = mock_file_path
 
     def setup(self):
@@ -74,16 +75,6 @@ class MockAdapter(Adapter):
                         )
 
                         product.add_child(attr_to_prod)
-
-
-
-
-
-
-
-
-
-
 
     def load(self):
         """Load all models by calling other methods"""

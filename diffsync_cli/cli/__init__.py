@@ -1,6 +1,6 @@
 import argparse
 from rich.console import Console
-from diffsync_cli.cli.commands import diff, version
+from diffsync_cli.cli.commands import diff, version, perfion
 console = Console()
 
 def main():
@@ -23,6 +23,18 @@ def main():
     diff_parser = subparsers.add_parser("diff", help="Syncs between two Sources")
     diff.add_arguments(diff_parser)
     diff_parser.set_defaults(func=diff.handle)
+
+    # Perfion client commands
+    perfion_parser = subparsers.add_parser("perfion", help="Perfion client commands")
+    perfion_subparsers = perfion_parser.add_subparsers(dest="perfion_cmd", required=True)
+
+    list_parser = perfion_subparsers.add_parser("list-attributes", help="List attributes for an item")
+    perfion.list_attributes.add_arguments(list_parser)
+    list_parser.set_defaults(func=perfion.list_attributes.handle)
+
+    cat_parser = perfion_subparsers.add_parser("list-categories", help="List all Perfion categories")
+    perfion.list_categories.add_arguments(cat_parser)
+    cat_parser.set_defaults(func=perfion.list_categories.handle)
 
     args = parser.parse_args()
     args.func(args, console)

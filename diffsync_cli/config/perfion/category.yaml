@@ -1,0 +1,15 @@
+# Perfion to CCVShop category mapping
+# Keys are Perfion category names, values are the corresponding CCVShop category identifiers.
+mapping:
+  "Sweaters": "Sweaters"
+  "Poloshirts": "Poloshirts"
+  "T-shirts": "Shirts"
+  "Werkbroeken": "Werkbroeken"
+  "Jassen": "Jacks"
+  "Overhemden en Blouses": "Shirts"
+  "Jeans": ""
+  "Overalls": "Overalls"
+  "Veiligheidsvesten": ""
+  "Bodywarmers": ""
+  "Accesoires": ""
+  "Ondergoed en Sokken": ""

@@ -1,0 +1,14 @@
+# Perfion to CCVShop category mapping
+# Keys are Perfion sizing values are the corresponding sizng names.
+mapping:
+  "XS": "XS"
+  "S": "S"
+  "M": "M"
+  "L": "L"
+  "XL": "XL"
+  "XXL": "XXL"
+  "3XL": "XXXL"
+  "4XL": "4/XL"
+  "5XL": "5/XL"
+  "6XL": "6/XL"
+  "7XL": "7/XL"

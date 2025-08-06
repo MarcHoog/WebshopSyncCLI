@@ -1,6 +1,18 @@
-from typing import List
 import os
+import yaml
+
+from typing import List
 from typing import Dict, Any, Optional, Callable
+from importlib.resources import files
+
+
+def load_yaml_config_file(namespace, file) -> Dict[str, Any]:
+    data = files(namespace).joinpath(file).read_text()
+
+    try:
+        return yaml.safe_load(data)
+    except Exception as e:
+        raise RuntimeError(f"Error loading internal yaml config files {namespace}, {file}: {e}")
 
 def normalize_env_var(name: str) -> str:
     """

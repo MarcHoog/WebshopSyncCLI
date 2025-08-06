@@ -10,9 +10,11 @@ from rich.text import Text
 
 from diffsync.logging import enable_console_logging
 from diffsync_cli.clients.ccv.client import CCVClient
+from diffsync_cli.clients.perfion.client import PerfionClient
 from diffsync_cli.intergrations.ccvshop.adapters.adapter_ccv import CCVShopAdapter
 from diffsync_cli.intergrations.ccvshop.adapters.adapter_mock import MockAdapter
 from diffsync_cli.config import ConfigSettings
+from diffsync_cli.intergrations.ccvshop.adapters.adapter_perfion import PerfionAdapter
 
 def render_diff_rich(diff, indent=0):
     """
@@ -138,8 +140,7 @@ def handle_ccvshop_integration(args, console):
     logging.info("Setting up CCVShop adapter...")
 
     try:
-        client = CCVClient(cfg=cfg)
-        dst = CCVShopAdapter(cfg=cfg, client=client)
+        dst = CCVShopAdapter(cfg=cfg, client=CCVClient(cfg=cfg))
     except ValueError as e:
         logging.error(f"Error setting up CCVShop adapter: {e}")
         sys.exit(1)
@@ -149,6 +150,11 @@ def handle_ccvshop_integration(args, console):
         cfg.load_env_vars(["MOCK"])
         logging.info("Setting up Mock adapter...")
         src = MockAdapter(cfg=cfg)
+    elif args.source == "perfion":
+        logging.info("Loading environment variables 'PERFION'")
+        cfg.load_env_vars(["PERFION"])
+        logging.info("Setting up perfion Adapter")
+        src = PerfionAdapter(cfg=cfg, client=PerfionClient())
     else:
         logger.error("Unsupported sources! Syncing to 'ccvshop' is only supported with 'mock' and 'tricorp'")
         sys.exit(1)
