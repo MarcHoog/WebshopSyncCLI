@@ -75,7 +75,8 @@ class CCVClient():
         body: Optional[Dict[str, Any]] = None,
         raw: Any = None,
         attempt = 0,
-        max_attempt = 3
+        max_attempt = 3,
+        wait_before_retry = 60
     ) -> CCVShopResult: # type: ignore
 
         if method.upper() not in self.SUPPORTED_METHODS:
@@ -117,8 +118,8 @@ class CCVClient():
             if resp.status_code == 429:  # Rate-limiting response
                 attempt += 1
                 if attempt <= max_attempt:  # Retry up to 3 times
-                    logger.info(f"Rate limit hit. Retrying attempt {attempt} after a delay...")
-                    time.sleep(60)
+                    logger.info(f"Rate limit hit. Retrying attempt {attempt} after a delay {wait_before_retry} seconds...")
+                    time.sleep(wait_before_retry)
                     return self._do(
                         method,
                         uri,

@@ -146,7 +146,9 @@ class CCVShopAdapter(Adapter):
                 {
                 "name": item["name"],
                 "id": item["id"],
-                "package": package.name
+                "package": package.name,
+                "description": item['description'],
+                "price": item["price"],
                 },
             ))
 
