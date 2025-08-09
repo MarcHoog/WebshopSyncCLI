@@ -1,4 +1,4 @@
-from diffsync_cli.clients.perfion.parsing import perfion_resp_to_dict
+from syncly.clients.perfion.parsing import perfion_resp_to_dict
 
 # TOOD: Should like be moved to it's own file eventually but for now this is fine
 EXPECTED_PERFION_RESPONSE = {

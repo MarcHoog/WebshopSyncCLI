@@ -7,7 +7,7 @@ on:
     paths:
       - 'Dockerfile'
       - 'pyproject.toml'
-      - 'diffsync_cli/**'
+      - 'syncly/**'
       - 'data/**'
       - '.github/workflows/docker-publish.yml'
       - 'README.md'

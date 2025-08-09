@@ -41,17 +41,17 @@ RUN pip install --upgrade pip setuptools wheel
 RUN pip install .[all] || pip install .
 
 # Copy the rest of the application code
-COPY diffsync_cli ./diffsync_cli
+COPY syncly ./syncly
 COPY data ./data
 
 # Copy config YAMLs if not included by setuptools
-COPY diffsync_cli/config/perfion ./diffsync_cli/config/perfion
+COPY syncly/config/perfion ./syncly/config/perfion
 
 # Optionally copy tests if you want to run them in the container
 # COPY tests ./tests
 
 # Set the entrypoint for the CLI (can be overridden in Kubernetes job spec)
-ENTRYPOINT ["diffsync"]
+ENTRYPOINT ["syncly"]
 
 # Default command (prints help)
 CMD ["--help"]

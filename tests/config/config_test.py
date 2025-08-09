@@ -2,7 +2,7 @@ import pytest
 import tempfile
 import os
 
-from diffsync_cli.config import normalize_env_var
+from syncly.config import normalize_env_var
 
 @pytest.mark.parametrize("input_str,expected", [
     ("my-var name!", "MY_VAR_NAME"),
@@ -17,7 +17,7 @@ def test_normalize_env_var(input_str, expected):
     assert normalize_env_var(input_str) == expected
 
 def test_configsettings_general_usage():
-    from diffsync_cli.config import ConfigSettings
+    from syncly.config import ConfigSettings
 
     # Create with some initial values
     config = ConfigSettings(api_key="secret", debug="true", number="123", truth=1)
@@ -36,7 +36,7 @@ def test_configsettings_general_usage():
 
 
 def test_configsettings_singleton_reflects_local_changes():
-    from diffsync_cli.config import ConfigSettings
+    from syncly.config import ConfigSettings
 
     singleton = ConfigSettings.instance()
     singleton._data.clear()
@@ -53,7 +53,7 @@ def test_configsettings_singleton_reflects_local_changes():
 
 
 def test_configsettings_from_env_file():
-    from diffsync_cli.config import ConfigSettings
+    from syncly.config import ConfigSettings
 
     # Create a temporary .env file
     env_content = """
@@ -80,7 +80,7 @@ def test_configsettings_from_env_file():
         os.remove(tmp_path)
 
 def test_configsettings_load_env_vars(monkeypatch):
-    from diffsync_cli.config import ConfigSettings
+    from syncly.config import ConfigSettings
 
     # Set up environment variables
     monkeypatch.setenv("MYAPP_API_KEY", "envsecret")
@@ -97,7 +97,7 @@ def test_configsettings_load_env_vars(monkeypatch):
 
 
 def test_validate():
-    from diffsync_cli.config import ConfigSettings
+    from syncly.config import ConfigSettings
 
     config = ConfigSettings()
     config.set("MYAPP_DEBUG", "1")

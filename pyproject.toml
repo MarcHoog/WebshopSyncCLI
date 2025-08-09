@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "diffsync-cli"
+name = "syncly"
 version = "1.0.0"
 description = "A CLI tool for diffing and syncing files using DiffSync."
 authors = [{ name = "DiffSync Team", email = "team@example.com" }]
@@ -18,10 +18,10 @@ Repository = "https://github.com/your-org/diffsync"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["diffsync_cli*"]
+include = ["syncly*"]
 
 [tool.setuptools.package-data]
-"diffsync_cli" = ["config/perfion/*.yaml"]
+"syncly" = ["config/perfion/*.yaml"]
 
 [project.scripts]
-diffsync = "diffsync_cli.cli:main"
+diffsync = "syncly.cli:main"
