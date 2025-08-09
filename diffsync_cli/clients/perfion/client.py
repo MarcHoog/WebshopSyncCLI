@@ -1,4 +1,3 @@
-from typing import Optional
 import requests
 from jinja2 import Template
 

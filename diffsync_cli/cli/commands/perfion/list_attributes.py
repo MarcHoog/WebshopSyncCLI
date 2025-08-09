@@ -19,6 +19,7 @@ def add_arguments(parser):
         help="One or more attribute names to retrieve",
     )
 
+#TODO: Fix This
 def handle(args, console: Console):
     """
     Handle the 'list-attributes' command: fetch products for the given item number
