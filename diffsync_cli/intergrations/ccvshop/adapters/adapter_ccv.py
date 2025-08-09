@@ -1,9 +1,19 @@
 import logging
 from typing import cast, Optional, Tuple, Dict
 from diffsync import Adapter
+from diffsync_cli.utils import base64_image_from_url
 from diffsync_cli.config import ConfigSettings
 from diffsync_cli.clients.ccv.client import CCVClient
-from diffsync_cli.intergrations.ccvshop.models.ccv_shop import  (CCVProduct, CCVCategory, CCVPackage, CCVCategoryToDevice, CCVAttribute, CCVAttributeValue, CCVAttributeValueToProduct)
+from diffsync_cli.intergrations.ccvshop.models.ccv_shop import  (
+    CCVProduct,
+    CCVCategory,
+    CCVPackage,
+    CCVCategoryToDevice,
+    CCVAttribute,
+    CCVAttributeValue,
+    CCVAttributeValueToProduct,
+    CCVProductPhoto
+)
 from diffsync_cli.utils import normalize_string
 from diffsync.enum import DiffSyncModelFlags
 
@@ -19,6 +29,7 @@ class CCVShopAdapter(Adapter):
     attribute = CCVAttribute
     attribute_value = CCVAttributeValue
     attribute_value_to_product = CCVAttributeValueToProduct
+    product_photo = CCVProductPhoto
 
     top_level = ["product"]
 
@@ -195,6 +206,34 @@ class CCVShopAdapter(Adapter):
 
                 product.add_child(attribute_value_to_product)
 
+    def load_product_photos(self):
+        """Loads in all product photos"""
+        products = cast(list[CCVProduct], self.get_all(self.product))
+        if not products:
+            logger.warning("No products have been loaded in the adapter, if this is expected it's not a problem if not you might have loaded in your objects in the wrong order")
+            return
+
+
+        for product in products:
+            result = self.conn.photos.get_photos(per_page=100, total_pages=-1, id=f"{product.id}")
+            photo_items = cast(dict, result.data).get("items") or []
+            for item in photo_items:
+                product_photo, _ = self.get_or_instantiate(
+                    self.product_photo,
+                    {
+                        "productnumber": product.productnumber,
+                        "alttext": item['alttext'],
+                        "file_type": item['deeplink'].split('.')[-1]
+                    },
+                    {
+                        "id": item['id'],
+                        "source": base64_image_from_url(item['deeplink'])
+                    }
+                )
+
+                product.add_child(product_photo)
+
+
 
     def load(self):
         """Load all models by calling other methods"""
@@ -204,3 +243,4 @@ class CCVShopAdapter(Adapter):
         self.load_products()
         self.load_products_to_category()
         self.load_attribute_values_to_product()
+        self.load_product_photos()

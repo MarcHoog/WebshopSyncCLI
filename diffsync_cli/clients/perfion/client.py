@@ -37,7 +37,7 @@ class PerfionClient:
         return response
 
     @staticmethod
-    def __get_products_query(index, per_page, item_number=None):
+    def __get_products_query(index, per_page):
         template = Template("""
         <Query>
         <Select languages="NLD" index="{{ index }}" maxCount="{{ per_page }}" options="IncludeTotalCount,IncludeFeatureViewOrder">
@@ -50,17 +50,14 @@ class PerfionClient:
             <Clause id="ReleaseToERP" operator="=" value="Yes"/>
             <Clause id="ItemStatus" operator="=" value="Voorraad artikel"/>
             <Clause id="ERPCompany" operator="=" value="37904"/>
-            {% if item_number %}
-            <Clause id="ItemNumber" operator="=" value="{{ item_number }}"/>
-            {% endif %}
         </Where>
         <Order><By id="String" direction="asc"/></Order>
         </Query>
         """)
-        return template.render(index=index, per_page=per_page, item_number=item_number)
+        return template.render(index=index, per_page=per_page)
 
 
-    def get_products(self, per_page=100, total_pages=1, item_number:Optional[str]= None):
+    def get_products(self, per_page=100, total_pages=1):
         if total_pages < -1 or total_pages == 0:
             raise(ValueError("Total page cannot be below -1 or 0"))
 
@@ -76,7 +73,7 @@ class PerfionClient:
                 "per_page": per_page
             }
 
-            result  = self._send_query(self.__get_products_query(**paging_params, item_number=item_number))
+            result  = self._send_query(self.__get_products_query(**paging_params))
             status_code = result.status_code
             text = result.content.decode("utf-8")
             data = perfion_resp_to_dict(text) # type: ignore

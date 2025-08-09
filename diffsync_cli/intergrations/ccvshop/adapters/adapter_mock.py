@@ -4,8 +4,8 @@ import os
 from typing import Optional
 from diffsync import Adapter
 from diffsync_cli.config import ConfigSettings
-from diffsync_cli.intergrations.ccvshop.models.base import Product, CategoryToDevice, AttributeValueToProduct
-from diffsync_cli.utils import normalize_string
+from diffsync_cli.intergrations.ccvshop.models.base import Product, CategoryToDevice, AttributeValueToProduct, ProductPhoto
+from diffsync_cli.utils import normalize_string, base64_endcode_image
 
 logger = logging.getLogger(__name__)
 
@@ -15,6 +15,7 @@ class MockAdapter(Adapter):
     product = Product
     category_to_device = CategoryToDevice
     attribute_value_to_product = AttributeValueToProduct
+    product_photo = ProductPhoto
 
     top_level = ["product"]
 
@@ -48,6 +49,7 @@ class MockAdapter(Adapter):
                     name=product_data.get("name", ""),
                     productnumber=product_data.get("article_number", ""),
                     package=product_data.get("package", "Kartonnen doos").strip().lower(),
+                    price=product_data.get("price", 999999.99)
                 )
                 self.add(product)
 
@@ -63,7 +65,6 @@ class MockAdapter(Adapter):
 
 
                 for propertie, values in product_data.get("properties", {}).items():
-
                     for value in values:
                         attr_to_prod, _  = self.get_or_instantiate(
                             self.attribute_value_to_product,
@@ -75,6 +76,25 @@ class MockAdapter(Adapter):
                         )
 
                         product.add_child(attr_to_prod)
+
+                for photo in product_data.get("photos", []):
+
+                    path = photo.get("path")
+
+                    photo_to_prod, _ = self.get_or_instantiate(
+                        self.product_photo,
+                        {
+                            "productnumber": product.productnumber,
+                            "alttext": path.split('/')[-1].split('.')[0],
+                            "file_type": "png"
+                        },
+                        {
+                            "source": base64_endcode_image(path),
+                        }
+                    )
+
+                    product.add_child(photo_to_prod)
+
 
     def load(self):
         """Load all models by calling other methods"""

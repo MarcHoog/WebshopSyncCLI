@@ -1,6 +1,8 @@
 import requests
 import logging
 import json
+import time
+
 from typing import cast
 
 from typing import Dict, Optional, Any, Union
@@ -15,8 +17,6 @@ from diffsync_cli.clients.ccv.api.attributes import AttributesEndpoint
 from diffsync_cli.clients.ccv.api.supplier import SupplierEndpoint
 from diffsync_cli.clients.ccv.api.product_to_attribute import ProductToAttributeEndpoint
 from diffsync_cli.clients.ccv.api.product_photos import ProductPhotoEndpoint
-
-
 from diffsync_cli.clients.ccv.models import CCVShopResult
 from diffsync_cli.config import ConfigSettings
 
@@ -73,7 +73,9 @@ class CCVClient():
         uri: str,
         params: Optional[Dict[str, Any]] = None,
         body: Optional[Dict[str, Any]] = None,
-        raw: Any = None
+        raw: Any = None,
+        attempt = 0,
+        max_attempt = 3
     ) -> CCVShopResult: # type: ignore
 
         if method.upper() not in self.SUPPORTED_METHODS:
@@ -112,6 +114,20 @@ class CCVClient():
 
         if not resp.ok:
             logger.warning(f"Non-2xx response: {resp.status_code} - {resp.text}")
+            if resp.status_code == 429:  # Rate-limiting response
+                attempt += 1
+                if attempt <= max_attempt:  # Retry up to 3 times
+                    logger.info(f"Rate limit hit. Retrying attempt {attempt} after a delay...")
+                    time.sleep(60)
+                    return self._do(
+                        method,
+                        uri,
+                        params,
+                        body,
+                        raw,
+                        attempt
+                    )
+
             try:
                 resp.raise_for_status()
             except requests.HTTPError as e:

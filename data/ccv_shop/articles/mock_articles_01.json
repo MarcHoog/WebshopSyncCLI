@@ -4,6 +4,7 @@
     "article_number": "1",
     "content": "This is a mock article",
     "description": "This is a mock article description.",
+    "price": 45.43,
     "package": "Kartonnen doos",
     "categories": [
       "TESTING_CATEGORY_1",
@@ -22,6 +23,7 @@
     "article_number": "2",
     "content": "This is a mock article",
     "description": "This is a mock article description.",
+    "price": 22.43,
     "package": "Kartonnen Doos",
     "categories": [
       "TESTING_CATEGORY_1",
@@ -30,8 +32,25 @@
     ],
     "properties": {
       "schoenmaten": ["36"],
-      "kleuren": ["wit"]
-    }
+      "kleuren": ["wit"],
+      "lettermaatvoering": [
+        "XS",
+        "S",
+        "L",
+        "M",
+        "XXL",
+        "XL",
+        "7/XL",
+        "4/XL",
+        "5/XL"
+      ]
+    },
+    "photos": [
+      {
+        "path": "data/ccv_shop/articles/default_image.png",
+        "alttext": "Default Picture of a Cute dog"
+      }
+    ]
   },
   {
     "name": "Fake Article 3",
@@ -43,6 +62,12 @@
       "TESTING_CATEGORY_1",
       "TESTING_CATEGORY_2",
       "INTERNAL_DIFFSYNC_MOCK"
+    ],
+    "photos": [
+      {
+        "path": "data/ccv_shop/articles/default_image.png",
+        "alttext": "Default Picture of a Cute dog"
+      }
     ]
   }
 ]

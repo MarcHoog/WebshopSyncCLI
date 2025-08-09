@@ -9,12 +9,24 @@ import sys
 from rich.text import Text
 
 from diffsync.logging import enable_console_logging
+from diffsync.enum import DiffSyncFlags
 from diffsync_cli.clients.ccv.client import CCVClient
 from diffsync_cli.clients.perfion.client import PerfionClient
 from diffsync_cli.intergrations.ccvshop.adapters.adapter_ccv import CCVShopAdapter
 from diffsync_cli.intergrations.ccvshop.adapters.adapter_mock import MockAdapter
+from diffsync_cli.intergrations.ccvshop.diff import AttributeOrderingDiff
 from diffsync_cli.config import ConfigSettings
 from diffsync_cli.intergrations.ccvshop.adapters.adapter_perfion import PerfionAdapter
+
+
+def truncate(value):
+
+    value = str(value)
+
+    if len(value) > 200:
+        return f"{value[:200]}..."
+
+    return value
 
 def render_diff_rich(diff, indent=0):
     """
@@ -39,19 +51,19 @@ def render_diff_rich(diff, indent=0):
             if has_plus and not has_minus:
                 lines.append(Text(f"{ind}  + {child}", style="green"))
                 for attr, value in plus.items():
-                    lines.append(Text(f"{ind}    + {attr}: {value}", style="green"))
+                    lines.append(Text(f"{ind}    + {attr}: {truncate(value)}", style="green"))
             elif has_minus and not has_plus:
                 lines.append(Text(f"{ind}  - {child}", style="red"))
                 for attr, value in minus.items():
-                    lines.append(Text(f"{ind}    - {attr}: {value}", style="red"))
+                    lines.append(Text(f"{ind}    - {attr}: {truncate(value)}", style="red"))
             elif not has_plus and not has_minus:
                 lines.append(Text(f"{ind}  * {child}", style="dim"))
             else:
                 lines.append(Text(f"{ind}  ! {child}", style="yellow"))
                 for attr, value in plus.items():
-                    lines.append(Text(f"{ind}    + {attr}: {value}", style="green"))
+                    lines.append(Text(f"{ind}    + {attr}: {truncate(value)}", style="green"))
                 for attr, value in minus.items():
-                    lines.append(Text(f"{ind}    - {attr}: {value}", style="red"))
+                    lines.append(Text(f"{ind}    - {attr}: {truncate(value)}", style="red"))
             # Recurse into nested diffs
             child_diffs = {k: v for k, v in child_diffs.items() if k not in ("+", "-")}
             if child_diffs:
@@ -164,7 +176,7 @@ def handle_ccvshop_integration(args, console):
     src.load()
     dst.load()
 
-    diff = src.diff_to(dst)
+    diff = src.diff_to(dst, diff_class=AttributeOrderingDiff)
     diff_dict = diff.dict()
     console.print("-" * 30 + " Diff Details " + "-" * 30)
     if not diff_dict:
@@ -181,4 +193,4 @@ def handle_ccvshop_integration(args, console):
 
     if args.sync:
         console.print("Syncing...")
-        src.sync_to(dst)
+        src.sync_to(dst, diff=diff, flags=DiffSyncFlags.CONTINUE_ON_FAILURE)

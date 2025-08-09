@@ -1,5 +1,5 @@
 from typing import TYPE_CHECKING, cast, Optional
-from diffsync.exceptions import ObjectNotFound
+from diffsync.exceptions import ObjectNotCreated, ObjectNotFound
 from diffsync_cli.intergrations.ccvshop.models.base import (
     Category,
     Product,
@@ -137,8 +137,8 @@ class CCVAttributeValueToProduct(AttributeValueToProduct):
             product = cast(CCVProduct, adapter.get(CCVProduct, {"productnumber": productnumber}))
             attribute_value = cast(CCVAttributeValue, adapter.get(CCVAttributeValue, {"attribute": attribute, "value": value}))
         except ObjectNotFound as e:
-            logger.error("Could not find product or attribute value")
-            raise e
+            logger.error(f"Could not find product {productnumber }or attribute value {value} {e}")
+            raise ObjectNotCreated(e)
 
         attr_to_prod_payload = {
             "optionvalue": attribute_value.id,
@@ -181,9 +181,8 @@ class CCVProductPhoto(ProductPhoto):
 
         photo_payload = {
             "file_type": ids["file_type"],
+            "alttext": ids["alttext"],
             "source": attrs["source"],
-            "alttext": attrs["alttext"],
-            "is_mainphoto": attrs["is_main"]
         }
 
         result = adapter.conn.photos.create_photo(f"{product.id}", photo_payload)

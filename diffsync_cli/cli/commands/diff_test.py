@@ -11,10 +11,10 @@ def parser():
 def test_sync_ccvshop_mock_diff(parser):
 
     args = parser.parse_args([
-        "mock",           # source
-        "ccvshop",        # destination
-        "--diff",         # enable diff
-        "--config", ".env"  # use your .env file
+        "perfion",
+        "ccvshop",
+        "--sync",
+        "--config", ".env"
     ])
 
     class DummyConsole:

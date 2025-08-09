@@ -1,10 +1,11 @@
 import argparse
 from rich.console import Console
 from diffsync_cli.cli.commands import diff, version, perfion
+from diffsync_cli.cli.logging import setup_global_logging
 console = Console()
 
 def main():
-    #setup_global_logging()
+    setup_global_logging()
 
     parser = argparse.ArgumentParser(
         description="Multi-file argparse CLI example with rich output"
@@ -35,6 +36,13 @@ def main():
     cat_parser = perfion_subparsers.add_parser("list-categories", help="List all Perfion categories")
     perfion.list_categories.add_arguments(cat_parser)
     cat_parser.set_defaults(func=perfion.list_categories.handle)
+
+    values_parser = perfion_subparsers.add_parser(
+        "list-values",
+        help="List all possible values for a given attribute across all products",
+    )
+    perfion.list_attribute_values.add_arguments(values_parser)
+    values_parser.set_defaults(func=perfion.list_attribute_values.handle)
 
     args = parser.parse_args()
     args.func(args, console)

@@ -1,6 +1,5 @@
 from typing import Dict, Any
 import xml.etree.ElementTree as ET
-from html import unescape
 
 def perfion_resp_to_dict(soap_response: str) -> Dict[str, Any]:
     """

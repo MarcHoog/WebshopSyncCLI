@@ -103,12 +103,15 @@ class Product(DiffSyncModel):
     name: str
     productnumber: str
     package: str
-    price: int = 0
+    price: float = 0
     short_description: str = ""
     description: str = ""
     categories: list = []
     attributes: list = []
     photos: list = []
+
+
+
 
 class CategoryToDevice(DiffSyncModel):
     """
@@ -149,20 +152,20 @@ class ProductPhoto(DiffSyncModel):
     DiffSync model for a product photo.
 
     Attributes:
-        name (str): Photo filename.
-        file_type (str): File extension/type.
+        filename (str): Photo filename.
+        filetype (str): File extension/type.
         productnumber (str): Identifier of the product.
-        source (str): URL or path to the photo.
+
+        source (str): Base64 of the image.
         alttext (str): Alternate text for the photo.
         is_main (bool): Flag indicating if this is the main photo.
     """
-    _model = "product_photo"
-    _identifiers = ("productnumber", "name", "file_type")
-    _attributes = ("alttext", "source", "is_main")
+    _modelname = "product_photo"
+    _identifiers = ("productnumber","alttext","file_type")
+    _attributes = ("source",)
 
-    name: str
     file_type: str
     productnumber: str
     source: str
-    alttext: str
+    alttext: str = ""
     is_main: bool = False
