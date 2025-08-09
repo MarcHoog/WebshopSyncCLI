@@ -7,16 +7,16 @@ mapping:
   BlackLime: zwart-Lime
   BlackOrange: zwart-oranje
   BlackRed: zwart-rood
-  BlackTurquoise: zwart-turquoise
-  BlackYellow: zwart-geel
+  #BlackTurquoise: zwart-turquoise
+  #BlackYellow: zwart-geel
   Blue: blauw
   Bottlegreen: flessegroen
   Brown: bruin
   Convoygrey: staalgrijs
   Darkgrey: donkergrijs
-  DarkgreyArmy: donkergrijs-armygroen
+  # DarkgreyArmy: donkergrijs-armygroen
   DarkgreyBlack: donkergrijs-zwart
-  DarkgreyRed: donkergrijs-rood
+  # DarkgreyRed: donkergrijs-rood
   Denimblack: donkerblauw-zwart
   Denimblue: donkerblauw
   Denimgrey: donkergrijs
@@ -24,37 +24,37 @@ mapping:
   Fluorlime: fluor-limoen
   Fluororange: fluor-oranje
   FluororangeGreen: fluor-oranje-groen
-  FluororangeInk: fluor-oranje-inkt
+  # FluororangeInk: fluor-oranje-inkt
   FluororangeNavy: fluor-oranje-marine
   Fluorred: fluor-rood
   Fluorroyalblue: fluor-koningsblauw
   Fluoryellow: fluor-geel
-  FluoryellowInk: fluor-geel-inkt
+  # FluoryellowInk: fluor-geel-inkt
   FluoryellowNavy: fluor-geel-marine
   Fuchsia: fuchsia
   GreyBlack: grijs-zwart
   Greymel: grijs-melange
   Ink: inktblauw
-  InkArmy: inktblauw-army
+  # InkArmy: inktblauw-army
   InkDarkgrey: inktblauw-darkgrey
   InkFluororange: inktblauw-fluororanje
   InkFluoryellow: inktblauw-fluorgeel
-  InkTurquoise: inktblauw-turquoise
+  # InkTurquoise: inktblauw-turquoise
   Khaki: khaki
   Lime: limegroen
   Navy: marine
-  NavyRed: marine-rood
-  NavyRoyalblue: marine-koningsblauw
+  # NavyRed: marine-rood
+  # NavyRoyalblue: marine-koningsblauw
   Orange: oranje
   OrangeYellow: oranje-geel
   Purple: paars
   Red: rood
   Royalblue: koningsblauw
-  RoyalblueNavy: koningsblauw-marine
+  # RoyalblueNavy: koningsblauw-marine
   Stonegreymel: lichtgrijs-melee
-  Tangerine: tangerine
+  # Tangerine: tangerine
   Turquoise: turquoise
   White: wit
-  WhiteDarkgrey: wit-donkergrijs
-  Wine: wijnrood
+  # WhiteDarkgrey: wit-donkergrijs
+  # Wine: wijnrood
   Yellow: geel

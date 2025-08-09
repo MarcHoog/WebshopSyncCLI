@@ -116,7 +116,7 @@ class PerfionAdapter(Adapter):
             for attr in x[1]:
                 value = x[0].get(attr)
                 if not value:
-                    logger.warning(f"Mapped product value not found for {attr}")
+                    logger.warning(f"Attribute {attr} cannot be mapped, skipping this attribute")
                 else:
                     attr_value, created = self.get_or_instantiate(
                         self.attribute_value_to_product,
@@ -130,25 +130,30 @@ class PerfionAdapter(Adapter):
                         product.add_child(attr_value)
 
     def process_product_img(self, product: PerfionProduct):
-        for url in product.images:
-            try:
-                b64_img = base64_image_from_url(url)
-            except RequestException:
-                logger.error(f"Failed to fetch image from URL: {url}")
-                continue
-            else:
-                product_photo, created = self.get_or_instantiate(
-                    self.product_photo,
-                    {
-                        "productnumber": product.productnumber,
-                        "file_type": "png",
-                        "alttext": url
-                    },
-                    {"source": b64_img}
-                )
+        for color, url in product.images:
+            if self.color_mapping.get(color):
+                try:
+                    b64_img = base64_image_from_url(url)
+                except RequestException:
+                    logger.error(f"Failed to fetch image from URL: {url}")
+                    continue
+                else:
+                    product_photo, created = self.get_or_instantiate(
+                        self.product_photo,
+                        {
+                            "productnumber": product.productnumber,
+                            "file_type": "png",
+                            "alttext": url
+                        },
+                        {"source": b64_img}
+                    )
 
-                if created:
-                    self.add_child(product, product_photo)
+                    if created:
+                        self.add_child(product, product_photo)
+            else:
+                logger.warning(f"Color {color} cannot be mapped, skipping this Image")
+
+
 
     def load_products(self):
         """
@@ -191,7 +196,7 @@ class PerfionAdapter(Adapter):
 
             append_if_not_exists(product_data.get("ERPColor"), product.colors)
             append_if_not_exists(product_data.get("TSizeNewDW"), product.sizing)
-            append_if_not_exists(product_data.get("BaseProductImageUrl"), product.images)
+            append_if_not_exists((product_data.get("ERPColor"), product_data.get("BaseProductImageUrl")), product.images)
 
         return cast(List[PerfionProduct], self.get_all(self.product))
 

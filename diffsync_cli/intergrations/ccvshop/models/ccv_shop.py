@@ -192,3 +192,12 @@ class CCVProductPhoto(ProductPhoto):
         })
 
         return super().create(adapter, ids, attrs)
+
+    def delete(self):
+        """Delete implementation of CCV Attribute Value to Product"""
+        adapter = cast("CCVShopAdapter", self.adapter)
+        if not self.id:
+            raise ValueError("Expected exesting object to have an ID")
+
+        adapter.conn.photos.delete_photo(f"{self.id}")
+        return super().delete()
