@@ -1,14 +1,14 @@
 import logging
 import threading
 
-from typing import Optional, cast, Tuple, Dict, Any, List
+from typing import cast, Tuple, List
 from concurrent.futures import ThreadPoolExecutor
 from diffsync import Adapter
 from requests.exceptions import RequestException
 from diffsync import DiffSyncModel
 
 from syncly.clients.perfion.client import PerfionClient
-from syncly.config import ConfigSettings, load_yaml_config_file
+from syncly.config import EnvSettings, SynclySettings
 from syncly.intergrations.ccvshop.models.base import (
     CategoryToDevice,
     AttributeValueToProduct,
@@ -18,13 +18,10 @@ from syncly.constants import DUTCH_SIZING, DUTCH_COLORS
 from syncly.intergrations.ccvshop.models.perfion import (
     PerfionProduct
 )
-from syncly.utils import normalize_string, base64_image_from_url, append_if_not_exists
+from syncly.utils import normalize_string, base64_image_from_url, append_if_not_exists, wrap_style
 
 logger = logging.getLogger(__name__)
 
-
-
-CONFIG_FILE_NAMESPACE = "syncly.config.perfion"
 
 class PerfionAdapter(Adapter):
     """
@@ -52,12 +49,7 @@ class PerfionAdapter(Adapter):
 
     top_level = ["product"]
 
-    sizing_mapping: Dict[str, Any] = load_yaml_config_file(CONFIG_FILE_NAMESPACE, "sizing.yaml").get("mapping", {})  # Maps sizes
-    color_mapping: Dict[str, Any] = load_yaml_config_file(CONFIG_FILE_NAMESPACE, "color.yaml").get("mapping", {})  # Maps colors
-    category_mapping: Dict[str, Any] = load_yaml_config_file(CONFIG_FILE_NAMESPACE, "category.yaml").get("mapping", {})  # Maps categories
-
-
-    def __init__(self, *args, cfg: Optional[ConfigSettings] = None, client: PerfionClient, **kwargs):
+    def __init__(self, *args, cfg: EnvSettings, settings: SynclySettings, client: PerfionClient, **kwargs):
         """
         Initialize the PerfionAdapter.
 
@@ -72,87 +64,106 @@ class PerfionAdapter(Adapter):
         """
         super().__init__(*args, **kwargs)
 
-        if not cfg:
-            cfg = ConfigSettings()
-            cfg.load_env_vars(["PERFION"])
-
-        if not cfg.verify("CCVSHOP_ROOT_CATEGORY", "PERFION_CUSTOMER_NAME"):
-            raise ValueError("CCVSHOP_ROOT_CATEGORY or/and PERFION_CUSTOMER_NAME is not set as an environment variable")
+        if not settings.ccv_shop.general.root_category and not settings.perfion.general.brand:
+            raise ValueError("ccv_shop.general.root_cateory or perfion.general.brand is not set in settings.yaml")
 
         self.cfg = cfg
+        self.settings = settings
         self.conn = client
 
+        self.sizing_mapping = self.settings.perfion.mapping.size
+        self.color_mapping = self.settings.perfion.mapping.color
+        self.category_mapping = self.settings.perfion.mapping.category
 
-    def process_product_category(self, product: PerfionProduct):
 
-        root_category, _ = self.get_or_instantiate(
-            self.category_to_device,
-            {
-                "category_name": self.cfg.get("CCVSHOP_ROOT_CATEGORY"),
-                "productnumber": product.productnumber,
-            }
-        )
-        self.add_child(product, root_category)
-
-        if mapped_name := self.category_mapping.get(product.category):
-            mapped_category, _ = self.get_or_instantiate(
+    def process_categories(self, product: PerfionProduct):
+        """
+        Process and add all relevant categories to the product.
+        """
+        categories = [self.settings.ccv_shop.general.root_category]
+        if mapped := self.category_mapping.get(product.category):
+            categories.append(mapped)
+        else:
+            logger.warning(f"Matching product category not found for: {product.category}")
+        categories.extend(self.settings.perfion.general.aditional_categories)
+        for category in categories:
+            cat_obj, _ = self.get_or_instantiate(
                 self.category_to_device,
                 {
-                    "category_name": mapped_name,
+                    "category_name": category,
                     "productnumber": product.productnumber,
                 }
             )
-            self.add_child(product, mapped_category)
-        else:
-            logger.warning(f"Matching product category not found for: {product.category}")
+            self.add_child(product, cat_obj)
 
-    def process_product_attr(self, product: PerfionProduct):
 
-        for x in [
-            (self.sizing_mapping, product.sizing, DUTCH_SIZING),
-            (self.color_mapping, product.colors, DUTCH_COLORS),
-        ]:
+    def process_mapped_attributes(self, product, mapping, product_attrs, attribute_name):
+        """
+        Generalized processing for mapped attributes (e.g., sizing, color).
+        """
+        for attr in product_attrs:
+            value = mapping.get(attr)
+            if not value:
+                logger.warning(f"Attribute {attr} cannot be mapped, skipping this attribute")
+                continue
+            attr_value, created = self.get_or_instantiate(
+                self.attribute_value_to_product,
+                {
+                    "productnumber": product.productnumber,
+                    "attribute": attribute_name,
+                    "value": normalize_string(value)
+                }
+            )
+            if created:
+                product.add_child(attr_value)
 
-            for attr in x[1]:
-                value = x[0].get(attr)
-                if not value:
-                    logger.warning(f"Attribute {attr} cannot be mapped, skipping this attribute")
-                else:
-                    attr_value, created = self.get_or_instantiate(
-                        self.attribute_value_to_product,
-                        {
-                            "productnumber": product.productnumber,
-                            "attribute": x[2],
-                            "value": normalize_string(value)
-                        }
-                    )
-                    if created:
-                        product.add_child(attr_value)
-
-    def process_product_img(self, product: PerfionProduct):
+    def process_images(self, product: PerfionProduct):
+        """
+        Process and add images to the product.
+        """
         for color, url in product.images:
-            if self.color_mapping.get(color):
-                try:
-                    b64_img = base64_image_from_url(url)
-                except RequestException:
-                    logger.error(f"Failed to fetch image from URL: {url}")
-                    continue
-                else:
-                    product_photo, created = self.get_or_instantiate(
-                        self.product_photo,
-                        {
-                            "productnumber": product.productnumber,
-                            "file_type": "png",
-                            "alttext": url
-                        },
-                        {"source": b64_img}
-                    )
-
-                    if created:
-                        self.add_child(product, product_photo)
-            else:
+            if not self.color_mapping.get(color):
                 logger.warning(f"Color {color} cannot be mapped, skipping this Image")
+                continue
+            try:
+                b64_img = base64_image_from_url(url)
+            except RequestException:
+                logger.error(f"Failed to fetch image from URL: {url}")
+                continue
+            product_photo, created = self.get_or_instantiate(
+                self.product_photo,
+                {
+                    "productnumber": product.productnumber,
+                    "file_type": "png",
+                    "alttext": url
+                },
+                {"source": b64_img}
+            )
+            if created:
+                self.add_child(product, product_photo)
 
+
+    def _get_products(self):
+        categories = self.settings.perfion.general.included_categories
+        excluded_products = self.settings.perfion.general.excluded_products
+
+        try:
+            result = self.conn.get_products()
+        except RequestException:
+            logger.error("Something went wrong trying to conact perfion, unable to connect to...")
+            exit(1)
+
+        logger.info("Remote Data Loaded...")
+
+        for product_data in result.data:
+            if categories and product_data["Category"] not in categories:
+                logger.info(f"Skipping product {product_data.get('ItemNumber')} not in included categories: {categories}")
+                continue
+            if product_data.get("ItemNumber") in excluded_products:
+                logger.info(f"Skipping excluded product: {product_data.get('ItemNumber')}")
+                continue
+
+            yield product_data
 
 
     def load_products(self):
@@ -165,32 +176,21 @@ class PerfionAdapter(Adapter):
         Raises:
             RequestException: If an error occurs while fetching product images.
         """
-        customer_name = self.cfg.get("PERFION_CUSTOMER_NAME")
-        categories = [c.strip() for c in self.cfg.get("PERFION_CATEGORIES").split(',')]
+        brand = self.settings.perfion.general.brand
 
-        try:
-            result = self.conn.get_products()
-        except RequestException:
-            logger.error("Something went wrong trying to conact perfion, unable to connect to...")
-            exit(1)
-
-        logger.info("Remote Data Loaded...")
-
-        for product_data in result.data:
-            if categories and product_data["Category"] not in categories:
-                continue
-
+        for product_data in self._get_products():
 
             product, _ = cast(Tuple[PerfionProduct, bool], self.get_or_instantiate(
                 model=self.product,
                 ids= {
                     "productnumber": product_data.get("ItemNumber", "")},
                 attrs= {
-                    "name":f"{customer_name} {product_data.get('ItemName', '')}",
+                    "name":f"{brand} {product_data.get('ItemName', '')}",
                     "package": "kartonnen doos",
                     "price": product_data.get("ERPGrossPrice1", 0.0),
-                    "description":product_data.get("Description"),
-                    "category": product_data["Category"]
+                    "description": wrap_style(product_data.get("Description")),
+                    "category": product_data["Category"],
+                    "brand": normalize_string(brand),
                 },
             ))
 
@@ -212,9 +212,10 @@ class PerfionAdapter(Adapter):
         Process a single product's categories, attributes, and images.
         """
         logger.info(f"Processing: {product.productnumber}: {product.name}")
-        self.process_product_category(product)
-        self.process_product_attr(product)
-        self.process_product_img(product)
+        self.process_categories(product)
+        self.process_mapped_attributes(product, self.sizing_mapping, product.sizing, DUTCH_SIZING)
+        self.process_mapped_attributes(product, self.color_mapping, product.colors, DUTCH_COLORS)
+        self.process_images(product)
 
     def load(self):
         """

@@ -3,8 +3,6 @@ import logging
 import json
 import time
 
-from typing import cast
-
 from typing import Dict, Optional, Any, Union
 from syncly.clients.ccv.auth import CCVAuth
 
@@ -17,33 +15,30 @@ from syncly.clients.ccv.api.attributes import AttributesEndpoint
 from syncly.clients.ccv.api.supplier import SupplierEndpoint
 from syncly.clients.ccv.api.product_to_attribute import ProductToAttributeEndpoint
 from syncly.clients.ccv.api.product_photos import ProductPhotoEndpoint
+from syncly.clients.ccv.api.brands import BrandEndpoint
 from syncly.clients.ccv.models import CCVShopResult
-from syncly.config import ConfigSettings
+from syncly.config import EnvSettings, SynclySettings
 
 
 logger = logging.getLogger(__name__)
 
 class CCVClient():
 
-    SUPPORTED_METHODS = ['GET', 'POST', 'DELETE']
-
     def __init__(self,
+                 cfg: EnvSettings,
+                 settings: SynclySettings,
                  base_url: Optional[str] = None,
-                 cfg: Optional[ConfigSettings] = None,
                  verify_ssl: bool = True):
 
-        if not cfg:
-            logger.warning("ConfigSettings not provided, using default and loading environment variables")
-            cfg = ConfigSettings()
-            cfg.load_env_vars(["CCVSHOP"])
+
 
         if not cfg.verify("CCVSHOP_PRIVATE_KEY", "CCVSHOP_PUBLIC_KEY"):
             raise ValueError("CCVSHOP_PRIVATE_KEY and or CCVSHOP_PUBLIC_KEY should be passed or defined in environment Variables or passed through config")
 
-        if not base_url and cfg.verify("CCVSHOP_BASE_URL"):
-            base_url = cast(str, cfg.get("CCVSHOP_BASE_URL"))
+        if not base_url and settings.ccv_shop.general.base_url:
+            base_url = settings.ccv_shop.general.base_url
         else:
-            raise ValueError("CCVSHOP_BASE_URL should be passed or defined in environment Variables or passed through config")
+            raise ValueError("ccv_shop.general.base_url should be defined in settings.yaml or passed as base_url")
 
         self.cfg = cfg
         public_key = self.cfg.get("CCVSHOP_PUBLIC_KEY")
@@ -66,6 +61,7 @@ class CCVClient():
         self.supplier = SupplierEndpoint(self)
         self.attributes = AttributesEndpoint(self)
         self.photos = ProductPhotoEndpoint(self)
+        self.brands = BrandEndpoint(self)
 
     def _do(
         self,
@@ -78,10 +74,6 @@ class CCVClient():
         max_attempt = 3,
         wait_before_retry = 60
     ) -> CCVShopResult: # type: ignore
-
-        if method.upper() not in self.SUPPORTED_METHODS:
-            raise ValueError(f"Method of type {method.upper()} is not supported please use any of {self.SUPPORTED_METHODS}")
-
 
         uri = f"/{uri.strip('/')}/"
         url = f"{self.base_url}{uri}"
@@ -173,6 +165,22 @@ class CCVClient():
             body=body,
         )
 
+    def _patch(self, uri_path: str, body: Dict[str, Any]) -> CCVShopResult:
+        """
+        Internal helper to perform PATCH requests.
+
+        Args:
+            uri_path: Relative URI path to append to base URL.
+            body: body Data to send
+
+        Returns:
+            requests.Response: The HTTP response object.
+        """
+        return self._do(
+            method="PATCH",
+            uri=uri_path,
+            body=body,
+        )
 
 
     def _delete(self, uri_path: str) -> CCVShopResult:

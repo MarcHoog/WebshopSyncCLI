@@ -6,6 +6,9 @@ import io
 def normalize_string(string: str):
     return string.strip().lower()
 
+def wrap_style(string: str):
+    return f'<span style="font-size:14px;"><span style="font-family:Verdana,Geneva,sans-serif;">{string}</span></span>'
+
 def append_if_not_exists(item, target_list):
     """Append an item to the target list if it does not already exist."""
     if item and item not in target_list:

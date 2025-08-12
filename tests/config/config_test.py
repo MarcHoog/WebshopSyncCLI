@@ -2,7 +2,7 @@ import pytest
 import tempfile
 import os
 
-from syncly.config import normalize_env_var
+from syncly.config.utils import normalize_env_var
 
 @pytest.mark.parametrize("input_str,expected", [
     ("my-var name!", "MY_VAR_NAME"),
@@ -17,10 +17,10 @@ def test_normalize_env_var(input_str, expected):
     assert normalize_env_var(input_str) == expected
 
 def test_configsettings_general_usage():
-    from syncly.config import ConfigSettings
+    from syncly.config import EnvSettings
 
     # Create with some initial values
-    config = ConfigSettings(api_key="secret", debug="true", number="123", truth=1)
+    config = EnvSettings(api_key="secret", debug="true", number="123", truth=1)
 
     # Test get method with and without default/cast
     assert config.get("api_key") == "secret"
@@ -36,13 +36,13 @@ def test_configsettings_general_usage():
 
 
 def test_configsettings_singleton_reflects_local_changes():
-    from syncly.config import ConfigSettings
+    from syncly.config import EnvSettings
 
-    singleton = ConfigSettings.instance()
+    singleton = EnvSettings.instance()
     singleton._data.clear()
     singleton._data["FOO"] = "bar"
 
-    local_ref = ConfigSettings.instance()
+    local_ref = EnvSettings.instance()
     assert local_ref._data["FOO"] == "bar"
 
     local_ref._data["FOO"] = "baz"
@@ -53,7 +53,7 @@ def test_configsettings_singleton_reflects_local_changes():
 
 
 def test_configsettings_from_env_file():
-    from syncly.config import ConfigSettings
+    from syncly.config import EnvSettings
 
     # Create a temporary .env file
     env_content = """
@@ -69,7 +69,7 @@ def test_configsettings_from_env_file():
         tmp_path = tmp.name
 
     try:
-        config = ConfigSettings().from_env_file(tmp_path)
+        config = EnvSettings().from_env_file(tmp_path)
         d = config.to_dict()
         assert d["API_KEY"] == "fromenv"
         assert d["DEBUG"] == "true"
@@ -80,14 +80,14 @@ def test_configsettings_from_env_file():
         os.remove(tmp_path)
 
 def test_configsettings_load_env_vars(monkeypatch):
-    from syncly.config import ConfigSettings
+    from syncly.config import EnvSettings
 
     # Set up environment variables
     monkeypatch.setenv("MYAPP_API_KEY", "envsecret")
     monkeypatch.setenv("MYAPP_DEBUG", "1")
     monkeypatch.setenv("OTHERAPP_API_KEY", "should_not_load")
 
-    config = ConfigSettings()
+    config = EnvSettings()
     config.load_env_vars(["MYAPP"])
 
     d = config.to_dict()
@@ -97,8 +97,8 @@ def test_configsettings_load_env_vars(monkeypatch):
 
 
 def test_validate():
-    from syncly.config import ConfigSettings
+    from syncly.config import EnvSettings
 
-    config = ConfigSettings()
+    config = EnvSettings()
     config.set("MYAPP_DEBUG", "1")
     config.verify("myapp_debug")

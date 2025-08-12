@@ -15,7 +15,7 @@ from syncly.clients.perfion.client import PerfionClient
 from syncly.intergrations.ccvshop.adapters.adapter_ccv import CCVShopAdapter
 from syncly.intergrations.ccvshop.adapters.adapter_mock import MockAdapter
 from syncly.intergrations.ccvshop.diff import AttributeOrderingDiff
-from syncly.config import ConfigSettings
+from syncly.config import EnvSettings, SynclySettings
 from syncly.intergrations.ccvshop.adapters.adapter_perfion import PerfionAdapter
 
 
@@ -141,32 +141,35 @@ def handle_ccvshop_integration(args, console):
         args: Parsed CLI arguments.
         console: Rich console for output.
     """
-    cfg = ConfigSettings()
+    cfg = EnvSettings()
     if args.config:
-        logging.info(f"Loading env configuration from {args.config}")
         cfg.from_env_file(args.config)
 
-    logging.info("Loading environment variables 'CCVSHOP'...")
     cfg.load_env_vars(["CCVSHOP"])
+    cfg.load_env_vars(["SETTINGS_PATH"])
+
+    settings = SynclySettings.from_yaml(cfg.get("SETTINGS_PATH", "settings.yaml"))
 
     logging.info("Setting up CCVShop adapter...")
-
     try:
-        dst = CCVShopAdapter(cfg=cfg, client=CCVClient(cfg=cfg))
+        client = CCVClient(cfg=cfg, settings=settings)
+        dst = CCVShopAdapter(cfg=cfg, settings=settings, client=client)
     except ValueError as e:
         logging.error(f"Error setting up CCVShop adapter: {e}")
         sys.exit(1)
 
     if args.source == "mock":
         logging.info("Loading environment variables 'MOCK'")
-        cfg.load_env_vars(["MOCK"])
         logging.info("Setting up Mock adapter...")
+
+        cfg.load_env_vars(["MOCK"])
         src = MockAdapter(cfg=cfg)
     elif args.source == "perfion":
         logging.info("Loading environment variables 'PERFION'")
-        cfg.load_env_vars(["PERFION"])
         logging.info("Setting up perfion Adapter")
-        src = PerfionAdapter(cfg=cfg, client=PerfionClient())
+
+        cfg.load_env_vars(["PERFION"])
+        src = PerfionAdapter(cfg=cfg, settings=settings, client=PerfionClient())
     else:
         logger.error("Unsupported sources! Syncing to 'ccvshop' is only supported with 'mock' and 'tricorp'")
         sys.exit(1)

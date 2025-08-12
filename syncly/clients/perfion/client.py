@@ -36,7 +36,7 @@ class PerfionClient:
         return response
 
     @staticmethod
-    def __get_products_query(index, per_page):
+    def __get_products_query(index, per_page, product_number=None):
         template = Template("""
         <Query>
         <Select languages="NLD" index="{{ index }}" maxCount="{{ per_page }}" options="IncludeTotalCount,IncludeFeatureViewOrder">

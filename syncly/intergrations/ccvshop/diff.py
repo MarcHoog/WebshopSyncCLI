@@ -2,26 +2,15 @@ import logging
 
 from typing import Dict, Any
 from collections import defaultdict
-from syncly.config import load_yaml_config_file
 from diffsync.diff import Diff
 from syncly.constants import DUTCH_COLORS, DUTCH_SIZING
+from syncly.config import SynclySettings
 
 from syncly.utils import normalize_string
 
 logger = logging.getLogger(__name__)
 
-CONFIG_FILE_NAMESPACE = "syncly.config.perfion"
-
 class AttributeOrderingDiff(Diff):
-    sizing_mapping: Dict[str, Any] = (
-        load_yaml_config_file(CONFIG_FILE_NAMESPACE, "sizing.yaml")
-        .get("mapping", {})
-    )
-
-    color_mapping: Dict[str, Any] = (
-        load_yaml_config_file(CONFIG_FILE_NAMESPACE, "color.yaml")
-        .get("mapping", {})
-    )
 
 
     @staticmethod
@@ -62,12 +51,16 @@ class AttributeOrderingDiff(Diff):
         'lettermaatvoering' group according to our sizing mapping.
         """
 
+        settings = SynclySettings.get_instance()
+        sizing_mapping = settings.perfion.mapping.size
+        color_mapping = settings.perfion.mapping.color
+
         attribute_groups: Dict[str, list] = defaultdict(list)
         for child in children.values():
             attr_name = child.keys.get("attribute", "")
             attribute_groups[attr_name].append(child)
 
-        for x in [(DUTCH_SIZING, cls.sizing_mapping), (DUTCH_COLORS, cls.color_mapping)]:
+        for x in [(DUTCH_SIZING, sizing_mapping), (DUTCH_COLORS, color_mapping)]:
             letter_group = attribute_groups.get(x[0], [])
             reference = [normalize_string(x) for x in x[1].values()]
             attribute_groups[x[0]] = cls._order_attributes(

@@ -3,7 +3,7 @@ import json
 import os
 from typing import Optional
 from diffsync import Adapter
-from syncly.config import ConfigSettings
+from syncly.config import EnvSettings
 from syncly.intergrations.ccvshop.models.base import Product, CategoryToDevice, AttributeValueToProduct, ProductPhoto
 from syncly.utils import normalize_string, base64_endcode_image
 
@@ -19,11 +19,11 @@ class MockAdapter(Adapter):
 
     top_level = ["product"]
 
-    def __init__(self, *args, cfg: Optional[ConfigSettings]= None, mock_file_path: Optional[str] = None, **kwargs,):
+    def __init__(self, *args, cfg: Optional[EnvSettings]= None, mock_file_path: Optional[str] = None, **kwargs,):
         super().__init__(*args, **kwargs)
 
         if not cfg:
-            cfg = ConfigSettings()
+            cfg = EnvSettings()
             cfg.load_env_vars(["MOCK"])
 
         if not mock_file_path:
@@ -94,7 +94,6 @@ class MockAdapter(Adapter):
                     )
 
                     product.add_child(photo_to_prod)
-
 
     def load(self):
         """Load all models by calling other methods"""

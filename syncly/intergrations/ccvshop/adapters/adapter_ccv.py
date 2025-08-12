@@ -1,10 +1,10 @@
 import logging
-from typing import cast, Optional, Tuple, Dict
+from typing import cast, Tuple, Dict
 from diffsync import Adapter
 from syncly.utils import base64_image_from_url
-from syncly.config import ConfigSettings
+from syncly.config import EnvSettings, SynclySettings
 from syncly.clients.ccv.client import CCVClient
-from syncly.intergrations.ccvshop.models.ccv_shop import  (
+from syncly.intergrations.ccvshop.models.ccv_shop import (
     CCVProduct,
     CCVCategory,
     CCVPackage,
@@ -12,7 +12,8 @@ from syncly.intergrations.ccvshop.models.ccv_shop import  (
     CCVAttribute,
     CCVAttributeValue,
     CCVAttributeValueToProduct,
-    CCVProductPhoto
+    CCVProductPhoto,
+    CCVBrand,
 )
 from syncly.utils import normalize_string
 from diffsync.enum import DiffSyncModelFlags
@@ -23,6 +24,7 @@ class CCVShopAdapter(Adapter):
     """DiffSync Adapter using requests to communicate to CCVShop"""
 
     product = CCVProduct
+    brand = CCVBrand
     category = CCVCategory
     package = CCVPackage
     category_to_device = CCVCategoryToDevice
@@ -36,23 +38,35 @@ class CCVShopAdapter(Adapter):
     category_map = {}
     product_map: Dict[int, CCVProduct] = {}
     package_map = {}
+    brand_map = {}
     attribute_map: Dict[int, CCVAttribute] = {}
 
-    # The Primary Category is the category that is used as the root category for all products.
-    root_category = None
 
-    def __init__(self, *args, cfg: Optional[ConfigSettings]= None, client: Optional[CCVClient] = None, **kwargs,):
+    def __init__(self, *args, cfg: EnvSettings, settings: SynclySettings, client: CCVClient, **kwargs,):
         super().__init__(*args, **kwargs)
 
-        if not cfg:
-            cfg = ConfigSettings()
-            cfg.load_env_vars(["CCVSHOP"])
-
-        if not client:
-            raise ValueError("Improperly configured settings for communicating to CcvShop. Please validate accuracy.")
+        if not settings.ccv_shop.general.root_category:
+            raise ValueError("ccv_shop.general.root_category is not set in settings")
 
         self.cfg = cfg
+        self.settings = settings
         self.conn = client
+        self.root_category = None
+
+    def load_brands(self):
+        """Load all brands from CCVShop"""
+        brands = self.conn.brands.get_brands(total_pages=-1)
+        brand_items = cast(dict, brands.data).get("items") or []
+
+        for b in brand_items:
+            brand, _ = cast(Tuple[CCVBrand, bool], self.get_or_instantiate(
+                self.brand,
+                {"name": normalize_string(b.get("name", ""))},
+                {"id": b.get("id")},
+            ))
+
+            self.brand_map[brand.id] = brand
+            brand.model_flags = DiffSyncModelFlags.IGNORE
 
     def load_packages(self):
         """Setup the package for CCVShop"""
@@ -60,10 +74,9 @@ class CCVShopAdapter(Adapter):
         package_items = cast(dict, packages.data).get("items") or []
 
         for p in package_items:
-            name = p.get("name", "").strip().lower()
             package, _ = cast(Tuple[CCVPackage, bool], self.get_or_instantiate(
                 self.package,
-                {"name":  name},
+                {"name": normalize_string(p.get("name", ""))},
                 {"id": p.get("id")  },
             ))
 
@@ -71,10 +84,6 @@ class CCVShopAdapter(Adapter):
             package.model_flags = DiffSyncModelFlags.IGNORE
 
     def load_categories(self):
-
-        if not self.cfg.verify("CCVSHOP_ROOT_CATEGORY"):
-            raise ValueError("CCVSHOP_ROOT_CATEGORY is not set")
-
         categories = self.conn.categories.get_categories(total_pages=-1)
         category_items = cast(dict, categories.data).get("items") or []
 
@@ -86,7 +95,7 @@ class CCVShopAdapter(Adapter):
                     {"id": c.get("id")  },
                 ))
 
-                if category.name == self.cfg.get("CCVSHOP_ROOT_CATEGORY"):
+                if category.name == self.settings.ccv_shop.general.root_category:
                     self.root_category = category
 
                 self.category_map[category.id] = category
@@ -127,7 +136,7 @@ class CCVShopAdapter(Adapter):
         """Load all articles by calling other methods"""
 
         if not self.root_category:
-            raise ValueError(f"Root category of name {self.cfg.get('CCVSHOP_ROOT_CATEGORY')} is not defined")
+            raise ValueError(f"Root category of name {self.settings.ccv_shop.general.root_category} is not defined")
 
         logger.info(f"Gathering products from root category: {self.root_category.name} | {self.root_category.id}")
         products = self.conn.product.get_products_by_categories(f"{self.root_category.id}", total_pages=-1)
@@ -138,6 +147,10 @@ class CCVShopAdapter(Adapter):
             if not package:
                 raise ValueError(f"Package with id {item.get('package_id')} is cannot be found in package map")
 
+            brand = self.brand_map.get(item["brand"]["id"])
+            if not brand:
+                raise ValueError(f"Brand with id {item.get('brand_id')} is cannot be found in brand map")
+
             product, _ = cast(Tuple[CCVProduct, bool], self.get_or_instantiate(
                 self.product,
                 {
@@ -146,9 +159,10 @@ class CCVShopAdapter(Adapter):
                 {
                 "name": item["name"],
                 "id": item["id"],
-                "package": package.name,
+                "package": normalize_string(package.name),
                 "description": item['description'],
                 "price": item["price"],
+                "brand": normalize_string(brand.name),
                 },
             ))
 
@@ -239,7 +253,9 @@ class CCVShopAdapter(Adapter):
 
     def load(self):
         """Load all models by calling other methods"""
+
         self.load_packages()
+        self.load_brands()
         self.load_categories()
         self.load_attributes()
         self.load_products()

@@ -26,6 +26,22 @@ class Package(DiffSyncModel):
 
     name: str
 
+
+class Brand(DiffSyncModel):
+    """
+    DiffSync model for a Brand.
+
+    Attributes:
+        name (str): The Brand name.
+    """
+    _modelname = "brand"
+    _identifiers = ("name",)
+    _attributes = ()
+
+    name: str
+
+
+
 class Supplier(DiffSyncModel):
     """
     DiffSync model for a supplier.
@@ -93,6 +109,7 @@ class Product(DiffSyncModel):
         "description",
         "package",
         "price",
+        "brand",
     )
     _children = {
         "category_to_device": "categories",
@@ -103,15 +120,13 @@ class Product(DiffSyncModel):
     name: str
     productnumber: str
     package: str
+    brand: str = ""
     price: float = 0
     short_description: str = ""
     description: str = ""
     categories: list = []
     attributes: list = []
     photos: list = []
-
-
-
 
 class CategoryToDevice(DiffSyncModel):
     """

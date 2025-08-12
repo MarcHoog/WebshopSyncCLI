@@ -1,5 +1,5 @@
 from typing import TYPE_CHECKING, cast, Optional
-from diffsync.exceptions import ObjectNotCreated, ObjectNotFound
+from diffsync.exceptions import ObjectNotCreated, ObjectNotFound, ObjectNotDeleted, ObjectNotUpdated
 from syncly.intergrations.ccvshop.models.base import (
     Category,
     Product,
@@ -9,6 +9,7 @@ from syncly.intergrations.ccvshop.models.base import (
     AttributeValue,
     AttributeValueToProduct,
     ProductPhoto,
+    Brand,
 
 )
 
@@ -21,6 +22,11 @@ if TYPE_CHECKING:
 
 class CCVPackage(Package):
     """ CCV Shop implementation of the Category model"""
+
+    id: int
+
+class CCVBrand(Brand):
+    """ CCV Shop implementation of the Brand model"""
 
     id: int
 
@@ -48,21 +54,21 @@ class CCVProduct(Product):
         """Create a Prodct object in CCV Shop."""
         try:
             package = cast(CCVPackage, adapter.get(CCVPackage, attrs.get("package", "")))
+            brand = cast(CCVBrand, adapter.get(CCVBrand, attrs.get("brand", "")))
         except ObjectNotFound as e:
-            logger.warning(f"Package of {attrs.get('package_name', '')} not found in Loaded Packages skipping creation of Product")
-            raise e
+            logger.warning(f"Package of {attrs.get('package', '')} or brand of {attrs.get('brand')} not found in Loaded Packages or Brands skipping creation of Product")
+            raise ObjectNotCreated(e)
 
         product_payload = {
             "name": attrs["name"],
             "productnumber" : ids["productnumber"],
             "description": attrs["description"],
             "package_id": package.id,
+            "brand_id": brand.id,
             "price": attrs["price"],
 
-
-            # TODO: Marc Define these somewhere else in the code
-            # Default values that atm we don't sync These should be magic numbers
-            # And should be defined somewhere pretier
+            # Defaults we don't check Should also be compared but not for now
+            "photo_size": "BIG",
             "active": False,
             "discount": 0,
             "taxtariff": "normal",
@@ -75,6 +81,32 @@ class CCVProduct(Product):
 
     def update(self, attrs):
         """Update implementation of CCV Category"""
+        adapter = cast("CCVShopAdapter", self.adapter)
+        if not self.id:
+            raise ObjectNotFound("Expected existing object to have an ID")
+
+        package: Optional[CCVPackage] = None
+        brand: Optional[CCVBrand] = None
+
+        try:
+            if "package" in attrs:
+                package = cast(CCVPackage, adapter.get(CCVPackage, attrs["package"]))
+            if "brand" in attrs:
+                brand = cast(CCVBrand, adapter.get(CCVBrand, attrs["brand"]))
+
+        except ObjectNotFound as e:
+            logger.warning(f"Package of {attrs.get('package_name', '')} not found in Loaded Packages skipping creation of Product")
+            raise ObjectNotUpdated(e)
+
+        update_payload = {
+            "name": attrs.get("name", ""),
+            "description": attrs.get("description", ""),
+            "package_id": package.id if package else None,
+            "brand_id": brand.id if brand else None,
+            "price": attrs.get("price", None),
+        }
+
+        adapter.conn.product.patch_product(f'{self.id}', {k: v for k, v in update_payload.items() if v})
         return super().update(attrs)
 
     def delete(self):
@@ -98,7 +130,7 @@ class CCVCategoryToDevice(CategoryToDevice):
             category = cast(CCVCategory, adapter.get(CCVCategory, category_name))
         except ObjectNotFound as e:
             logger.error(f"Couldn't find product or category {productnumber} or {category_name}")
-            raise e
+            raise ObjectNotCreated(e)
 
         prod_to_cat_payload = {
             "product_id": product.id,
@@ -157,7 +189,7 @@ class CCVAttributeValueToProduct(AttributeValueToProduct):
         """Delete implementation of CCV Attribute Value to Product"""
         adapter = cast("CCVShopAdapter", self.adapter)
         if not self.id:
-            raise ValueError("Expected exesting object to have an ID")
+            raise ObjectNotDeleted("Expected exesting object to have an ID")
 
         adapter.conn.product_to_attribute.delete_product_attribute_value(f"{self.id}")
         return super().delete()

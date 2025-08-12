@@ -20,8 +20,5 @@ Repository = "https://github.com/your-org/diffsync"
 where = ["."]
 include = ["syncly*"]
 
-[tool.setuptools.package-data]
-"syncly" = ["config/perfion/*.yaml"]
-
 [project.scripts]
 diffsync = "syncly.cli:main"
