@@ -104,8 +104,8 @@ class PerfionAdapter(Adapter):
         for attr in product_attrs:
             value = mapping.get(attr)
             if not value:
-                logger.warning(f"Attribute {attr} cannot be mapped, skipping this attribute")
-                continue
+                logger.debug(f" No Mapped Attribute {attr} will be used as is")
+                value = attr
             attr_value, created = self.get_or_instantiate(
                 self.attribute_value_to_product,
                 {

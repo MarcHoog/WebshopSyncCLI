@@ -1,6 +1,6 @@
 import argparse
 from rich.console import Console
-from syncly.cli.commands import diff, version, perfion
+from syncly.cli.commands import diff, version, perfion, ccv
 from syncly.cli.logging import setup_global_logging
 console = Console()
 
@@ -43,6 +43,18 @@ def main():
     )
     perfion.list_attribute_values.add_arguments(values_parser)
     values_parser.set_defaults(func=perfion.list_attribute_values.handle)
+
+
+    ## CCV client commands
+    ccv_parser = subparsers.add_parser("ccv", help="CCV client commands")
+    ccv_subparsers = ccv_parser.add_subparsers(dest="ccv_cmd", required=True)
+
+    create_attr_parser = ccv_subparsers.add_parser(
+        "create-attribute-set-from-txt",
+        help="Create a CCV attribute set from a TXT file"
+    )
+    ccv.create_attribute_set_from_txt.add_arguments(create_attr_parser)
+    ccv_parser.set_defaults(func=ccv.create_attribute_set_from_txt.handle)
 
     args = parser.parse_args()
     args.func(args, console)

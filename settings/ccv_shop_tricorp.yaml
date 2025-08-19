@@ -8,13 +8,19 @@ settings:
       brand: "Tricorp"
       # Additional categories are categories that are not in the Perfion data, but should be added to each product
       aditional_categories:
-        - "Tricorp Testpagina"
+        - "Tricorpwebshop.nl"
       included_categories:
+        - "Sweaters"
+        - "Poloshirts"
         - "T-shirts"
-    #        - "Overhemden en Blouses"
-    #      excluded_products:
-    #        - "123456712"
-
+        - "Werkbroeken"
+        - "Jassen"
+        - "Overhemden en Blouses"
+        - "Jeans"
+        - "Overalls"
+        - "Veiligheidsvesten"
+        - "Bodywarmers"
+        - "Ondergoed en Sokken"
     mapping:
       color:
         Antramel: grijs-melange
@@ -89,15 +95,15 @@ settings:
         "Bodywarmers": ""
         "Accesoires": ""
         "Ondergoed en Sokken": ""
-      size:
-        "XS": "XS"
-        "S": "S"
-        "M": "M"
-        "L": "L"
-        "XL": "XL"
-        "XXL": "XXL"
-        "3XL": "XXXL"
-        "4XL": "4/XL"
-        "5XL": "5/XL"
-        "6XL": "6/XL"
-        "7XL": "7/XL"
+    #  size:
+    #  "XS": "XS"
+    #  "S": "S"
+    #  "M": "M"
+    #  "L": "L"
+    #  "XL": "XL"
+    #  "XXL": "XXL"
+    #  "3XL": "XXXL"
+    #  "4XL": "4/XL"
+    #  "5XL": "5/XL"
+    #  "6XL": "6/XL"
+    #  "7XL": "7/XL"

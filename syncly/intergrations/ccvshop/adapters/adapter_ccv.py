@@ -1,4 +1,5 @@
 import logging
+from time import sleep
 from typing import cast, Tuple, Dict
 from diffsync import Adapter
 from syncly.utils import base64_image_from_url
@@ -205,6 +206,7 @@ class CCVShopAdapter(Adapter):
             return
 
         for product in products:
+            sleep(0.2)  # Rate limiting to avoid hitting API limits
             result = self.conn.product_to_attribute.get_product_to_attribute_values(f"{product.id}")
             attribute_items = cast(dict, result.data).get("items") or []
             for item in attribute_items:
@@ -231,6 +233,7 @@ class CCVShopAdapter(Adapter):
 
 
         for product in products:
+            sleep(0.2)  # Rate limiting to avoid hitting API limits
             result = self.conn.photos.get_photos(per_page=100, total_pages=-1, id=f"{product.id}")
             photo_items = cast(dict, result.data).get("items") or []
             for item in photo_items:

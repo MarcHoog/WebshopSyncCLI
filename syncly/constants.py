@@ -1,4 +1,4 @@
-DUTCH_SIZING = "lettermaatvoering"
+DUTCH_SIZING = "maten"
 DUTCH_COLORS = "kleuren"
 
 CCV_SHOP_ROOT_CATEGORY = "ccv_shop.general.root_category"

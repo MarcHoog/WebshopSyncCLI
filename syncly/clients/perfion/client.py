@@ -36,7 +36,7 @@ class PerfionClient:
         return response
 
     @staticmethod
-    def __get_products_query(index, per_page, product_number=None):
+    def __get_products_query(index, per_page, item_number=None):
         template = Template("""
         <Query>
         <Select languages="NLD" index="{{ index }}" maxCount="{{ per_page }}" options="IncludeTotalCount,IncludeFeatureViewOrder">
@@ -56,7 +56,8 @@ class PerfionClient:
         return template.render(index=index, per_page=per_page)
 
 
-    def get_products(self, per_page=100, total_pages=1):
+    # TODO: Item number should do something in the query later on
+    def get_products(self, per_page=100, total_pages=1, item_number=None):
         if total_pages < -1 or total_pages == 0:
             raise(ValueError("Total page cannot be below -1 or 0"))
 
