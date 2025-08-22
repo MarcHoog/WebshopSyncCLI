@@ -42,6 +42,8 @@ class CCVShopAdapter(Adapter):
     brand_map = {}
     attribute_map: Dict[int, CCVAttribute] = {}
 
+    def __str__(self):
+        return "CCVShopAdapter"
 
     def __init__(self, *args, cfg: EnvSettings, settings: SynclySettings, client: CCVClient, **kwargs,):
         super().__init__(*args, **kwargs)

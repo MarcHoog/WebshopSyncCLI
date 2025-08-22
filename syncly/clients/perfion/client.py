@@ -5,7 +5,7 @@ from syncly.clients.perfion.models import PerfionResult
 from syncly.clients.perfion.parsing import perfion_resp_to_dict
 
 class PerfionClient:
-    def __init__(self, api_url: str = "https://perfion.tricorp.com:85/Perfion/GetData.asmx"):
+    def __init__(self, api_url: str = "https://perfion.tricorp.com:85/Perfion/GetData.asmx", *args, **kwargs):
         self.api_url = api_url
         self.headers = {
             "Content-Type": "text/xml; charset=utf-8"

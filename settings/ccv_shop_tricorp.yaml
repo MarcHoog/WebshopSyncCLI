@@ -1,7 +1,7 @@
 settings:
   ccv_shop:
     general:
-      root_category: INTERNAL_DIFFSYNC_MOCK
+      root_category: INTERNAL_SYNC_TRICORP
       base_url: "https://www.vanorsouw.biz"
       color_category: "tricorp-kleuren"
       sizing_category: "maten"

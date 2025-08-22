@@ -8,15 +8,49 @@ import logging
 import sys
 from rich.text import Text
 
+from typing import Optional
 from diffsync.logging import enable_console_logging
 from diffsync.enum import DiffSyncFlags
 from syncly.clients.ccv.client import CCVClient
 from syncly.clients.perfion.client import PerfionClient
 from syncly.intergrations.ccvshop.adapters.adapter_ccv import CCVShopAdapter
-from syncly.intergrations.ccvshop.adapters.adapter_mock import MockAdapter
 from syncly.intergrations.ccvshop.diff import AttributeOrderingDiff
 from syncly.config import EnvSettings, SynclySettings
 from syncly.intergrations.ccvshop.adapters.adapter_perfion import PerfionAdapter
+from syncly.webhook import send_discord_webhook
+
+
+def _fatal(err_msg, webhook=None):
+    logging.error(err_msg)
+    if webhook:
+           send_discord_webhook(
+            webhook_url=webhook,
+            status="error",
+            title="Fatal Error",
+            message=err_msg
+           )
+
+    sys.exit(1)
+
+def _create_adapter(settings: SynclySettings, cfg: EnvSettings, Adapter, Client, webhook:Optional[str] = None):
+    logging.info(f"Setting up {Adapter} adapter...")
+    try:
+        client = Client(cfg=cfg, settings=settings)
+        adapter = Adapter(cfg=cfg, settings=settings, client=client)
+    except ValueError as e:
+        err_msg = f"Something went wrong setting creating an adapter {Adapter}: {e}"
+        _fatal(err_msg, webhook)
+
+    return adapter # type: ignore
+
+def _load(adapter, webhook: Optional[str]=None):
+    logging.info(f"Loading in data using: {adapter}. ")
+    try:
+        adapter.load()
+    except Exception as e:
+        err_msg  = f"Something went wrong loading in data into {adapter}: {e}"
+        _fatal(err_msg, webhook)
+    return adapter
 
 
 def truncate(value):
@@ -81,19 +115,6 @@ def add_arguments(parser):
         parser (argparse.ArgumentParser): The argument parser to add arguments to.
     """
     parser.add_argument(
-        "source",
-        type=str,
-        help="Path to source file",
-    )
-
-    parser.add_argument(
-        "destination",
-        type=str,
-        choices=["ccvshop"],
-        help="Destination to sync to",
-    )
-
-    parser.add_argument(
         "-c", "--config",
         type=str,
         help="Path to configuration file",
@@ -130,56 +151,21 @@ def handle(args, console):
         args: Parsed CLI arguments.
         console: Rich console for output.
     """
-    if args.destination == "ccvshop":
-        handle_ccvshop_integration(args, console)
 
-def handle_ccvshop_integration(args, console):
-    """
-    Handle integration with CCVShop for sync and diff operations.
-
-    Args:
-        args: Parsed CLI arguments.
-        console: Rich console for output.
-    """
     cfg = EnvSettings()
     if args.config:
         cfg.from_env_file(args.config)
 
-    cfg.load_env_vars(["CCVSHOP"])
-    cfg.load_env_vars(["SETTINGS_PATH"])
-
+    cfg.load_env_vars(["CCVSHOP", "SETTINGS_PATH","DISCORD", "PERFION"])
     settings = SynclySettings.from_yaml(cfg.get("SETTINGS_PATH", "settings.yaml"))
 
-    logging.info("Setting up CCVShop adapter...")
-    try:
-        client = CCVClient(cfg=cfg, settings=settings)
-        dst = CCVShopAdapter(cfg=cfg, settings=settings, client=client)
-    except ValueError as e:
-        logging.error(f"Error setting up CCVShop adapter: {e}")
-        sys.exit(1)
+    webhook = cfg.get("DISCORD_WEBHOOK_URL", None)
 
-    if args.source == "mock":
-        logging.info("Loading environment variables 'MOCK'")
-        logging.info("Setting up Mock adapter...")
+    src = _create_adapter(settings, cfg, PerfionAdapter, PerfionClient, webhook)
+    dst = _create_adapter(settings, cfg, CCVShopAdapter, CCVClient, webhook)
 
-        cfg.load_env_vars(["MOCK"])
-        src = MockAdapter(cfg=cfg)
-    elif args.source == "perfion":
-        logging.info("Loading environment variables 'PERFION'")
-        logging.info("Setting up perfion Adapter")
-
-        cfg.load_env_vars(["PERFION"])
-        src = PerfionAdapter(cfg=cfg, settings=settings, client=PerfionClient())
-    else:
-        logger.error("Unsupported sources! Syncing to 'ccvshop' is only supported with 'mock' and 'tricorp'")
-        sys.exit(1)
-
-    enable_console_logging(verbosity=3)
-    logger.info(f"Loading Source {args.source}")
-    src.load()
-
-    logger.info("Loading DST ccvshop")
-    dst.load()
+    _load(src, webhook)
+    _load(dst, webhook)
 
     logger.info("Creating diff")
     diff = src.diff_to(dst, diff_class=AttributeOrderingDiff)
@@ -198,5 +184,6 @@ def handle_ccvshop_integration(args, console):
     console.print(f"[bold magenta]Sync Summary:[/bold magenta] {summary_str}")
 
     if args.sync:
+        enable_console_logging(verbosity=3)
         console.print("Syncing...")
         src.sync_to(dst, diff=diff, flags=DiffSyncFlags.CONTINUE_ON_FAILURE)

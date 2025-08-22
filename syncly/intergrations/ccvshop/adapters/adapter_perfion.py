@@ -48,6 +48,9 @@ class PerfionAdapter(Adapter):
 
     top_level = ["product"]
 
+    def __str__(self):
+        return "PerfionAdapter"
+
     def __init__(self, *args, cfg: EnvSettings, settings: SynclySettings, client: PerfionClient, **kwargs):
         """
         Initialize the PerfionAdapter.
