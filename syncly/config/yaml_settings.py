@@ -5,6 +5,8 @@ import yaml
 class CCVShopGeneral(BaseModel):
     root_category: str = ""
     base_url: str = ""
+    color_category: str = ""
+    sizing_category: str = ""
 
 class CCVShopSettings(BaseModel):
     general: CCVShopGeneral

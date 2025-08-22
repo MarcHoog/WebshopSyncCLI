@@ -4,31 +4,35 @@ from PIL import Image
 import io
 
 def normalize_string(string: str):
+    """
+    Normalize a string for consistent comparisons.
+    """
     return string.strip().lower()
 
 def wrap_style(string: str):
+    """
+    Wrap a string in HTML span tags for styling.
+    """
     return f'<span style="font-size:14px;"><span style="font-family:Verdana,Geneva,sans-serif;">{string}</span></span>'
 
 def append_if_not_exists(item, target_list):
-    """Append an item to the target list if it does not already exist."""
+    """
+    Append an item to a list only if it does not already exist.
+    """
     if item and item not in target_list:
         target_list.append(item)
 
 def base64_endcode_image(path):
+    """
+    Encode an image file to a base64 string.
+    """
     with open(path, 'rb') as image_file:
         encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
     return encoded_string
 
 def base64_image_from_url(url, target_resolution=(854, 480)):
     """
-    Fetch an image from a URL, scale it down to the target resolution, and return its base64 encoding.
-
-    Args:
-        url (str): The URL of the image.
-        target_resolution (tuple): The desired resolution (width, height) for the image.
-
-    Returns:
-        str: Base64-encoded string of the scaled image.
+    Download an image from a URL, resize it, and encode it as base64.
     """
     result = requests.get(url)
     result.raise_for_status()
@@ -37,3 +41,25 @@ def base64_image_from_url(url, target_resolution=(854, 480)):
     buffer = io.BytesIO()
     image.save(buffer, format=image.format)
     return base64.b64encode(buffer.getvalue()).decode('utf-8')
+
+def normalize_env_var(name: str) -> str:
+    """
+    Normalize a string to a valid environment variable format.
+    """
+    result = []
+    prev_was_sep = False
+    for char in name.strip():
+        if char in {' ', '-'}:
+            if not prev_was_sep:
+                result.append('_')
+                prev_was_sep = True
+        elif char.isalnum() or char == '_':
+            result.append(char)
+            prev_was_sep = False
+
+    normalized = ''.join(result)
+    # Ensure it starts with a letter or underscore
+    if normalized:
+        if not normalized[0].isalpha() or normalized[0] == '_':
+            normalized = '_' + normalized
+    return normalized.upper()

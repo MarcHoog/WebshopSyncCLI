@@ -14,7 +14,6 @@ from syncly.intergrations.ccvshop.models.base import (
     AttributeValueToProduct,
     ProductPhoto,
 )
-from syncly.constants import DUTCH_SIZING, DUTCH_COLORS
 from syncly.intergrations.ccvshop.models.perfion import (
     PerfionProduct
 )
@@ -172,9 +171,6 @@ class PerfionAdapter(Adapter):
 
         This method retrieves product data, creates product instances, and associates
         them with categories, attributes, and photos.
-
-        Raises:
-            RequestException: If an error occurs while fetching product images.
         """
         brand = self.settings.perfion.general.brand
 
@@ -183,14 +179,17 @@ class PerfionAdapter(Adapter):
             product, _ = cast(Tuple[PerfionProduct, bool], self.get_or_instantiate(
                 model=self.product,
                 ids= {
-                    "productnumber": product_data.get("ItemNumber", "")},
+                    "productnumber": product_data.get('ItemNumber', '')},
                 attrs= {
                     "name":f"{brand} {product_data.get('ItemName', '')}",
                     "package": "kartonnen doos",
-                    "price": product_data.get("ERPGrossPrice1", 0.0),
-                    "description": wrap_style(product_data.get("Description")),
-                    "category": product_data["Category"],
+                    "price": product_data.get('ERPGrossPrice1', 0.0),
+                    "description": wrap_style(product_data.get('Description')),
+                    "category": product_data['Category'],
                     "brand": normalize_string(brand),
+
+                    "page_title": f"{brand} {product_data.get('ItemName', '')} ({product_data.get('ItemNumber', '')})",
+                    "meta_description": product_data.get('Description'),
                 },
             ))
 
@@ -211,10 +210,10 @@ class PerfionAdapter(Adapter):
         """
         Process a single product's categories, attributes, and images.
         """
-        logger.info(f"Processing: {product.productnumber}: {product.name}")
+        logger.debug(f"Processing: {product.productnumber}: {product.name}")
         self.process_categories(product)
-        self.process_mapped_attributes(product, self.sizing_mapping, product.sizing, DUTCH_SIZING)
-        self.process_mapped_attributes(product, self.color_mapping, product.colors, DUTCH_COLORS)
+        self.process_mapped_attributes(product, self.sizing_mapping, product.sizing, self.settings.ccv_shop.general.sizing_category)
+        self.process_mapped_attributes(product, self.color_mapping, product.colors, self.settings.ccv_shop.general.color_category)
         self.process_images(product)
 
     def load(self):

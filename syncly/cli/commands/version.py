@@ -1,4 +1,7 @@
 def handle(args, console):
+    """
+    Print the CLI version, author, and repository information.
+    """
     version = "1.0.0"
     author = "DiffSync Team"
     repo_url = "https://github.com/your-org/diffsync"

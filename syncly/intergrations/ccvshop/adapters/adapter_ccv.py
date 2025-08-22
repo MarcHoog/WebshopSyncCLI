@@ -144,6 +144,11 @@ class CCVShopAdapter(Adapter):
         product_items = cast(dict, products.data).get("items") or []
 
         for item in product_items:
+            name = item.get("name", "")
+            product_number = item.get("productnumber", "")
+
+            logger.debug(f"Processing: {product_number}: {name}")
+
             package = self.package_map.get(item["package"]["id"])
             if not package:
                 raise ValueError(f"Package with id {item.get('package_id')} is cannot be found in package map")
@@ -152,22 +157,30 @@ class CCVShopAdapter(Adapter):
             if not brand:
                 raise ValueError(f"Brand with id {item.get('brand_id')} is cannot be found in brand map")
 
-            product, _ = cast(Tuple[CCVProduct, bool], self.get_or_instantiate(
-                self.product,
-                {
-                    "productnumber": item["productnumber"],
-                },
-                {
-                "name": item["name"],
-                "id": item["id"],
-                "package": normalize_string(package.name),
-                "description": item['description'],
-                "price": item["price"],
-                "brand": normalize_string(brand.name),
-                },
-            ))
 
-            self.product_map[product.id] = product
+
+            try:
+                product, _ = cast(Tuple[CCVProduct, bool], self.get_or_instantiate(
+                    self.product,
+                    {
+                        "productnumber": product_number,
+                    },
+                    {
+                    "name": name,
+                    "id": item["id"],
+                    "package": normalize_string(package.name),
+                    "description": item['description'],
+                    "price": item["price"],
+                    "brand": normalize_string(brand.name),
+                    "page_title": item["page_title"],
+                    "meta_description": item["meta_description"],
+                    "meta_keywords": item["meta_keywords"],
+                    },
+                ))
+                self.product_map[product.id] = product
+            except KeyError:
+                # TODO: Better logging message
+                logger.error("KeyError while processing product, lickily missing a certain fields")
 
 
     def load_products_to_category(self):
@@ -176,26 +189,22 @@ class CCVShopAdapter(Adapter):
             prod_to_cat = self.conn.product_to_category.get_product_to_category(id=cat_id, total_pages=-1)
             prod_to_cat_items = cast(dict, prod_to_cat.data).get("items") or []
             for item in prod_to_cat_items:
-                prod = self.product_map.get(item.get("product_id"))
-                if prod:
+                product = self.product_map.get(item.get("product_id"))
+                if product:
                     cat_to_dev, _ = self.get_or_instantiate(
                         CCVCategoryToDevice,
                         {
                             "category_name": cat.name,
-                            "productnumber": prod.productnumber,
+                            "productnumber": product.productnumber,
                         },
                         {
                             "id": item["id"],
                             "category_id": cat.id,
-                            "product_id": prod.id,
+                            "product_id": product.id,
                         },
                     )
 
-                    prod.add_child(cat_to_dev)
-
-                else:
-                    logger.info("Skipping product with ID: %s", item.get("product_id"))
-
+                    product.add_child(cat_to_dev)
 
     def load_attribute_values_to_product(self):
         """Loads in all the attribute Values that are attached to a product"""

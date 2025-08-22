@@ -110,6 +110,9 @@ class Product(DiffSyncModel):
         "package",
         "price",
         "brand",
+        "page_title",
+        "meta_description",
+        "meta_keywords",
     )
     _children = {
         "category_to_device": "categories",
@@ -127,6 +130,11 @@ class Product(DiffSyncModel):
     categories: list = []
     attributes: list = []
     photos: list = []
+
+    # SEO Fields
+    page_title: str = ""
+    meta_description: str= ""
+    meta_keywords: str = ""
 
 class CategoryToDevice(DiffSyncModel):
     """

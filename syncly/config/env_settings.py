@@ -1,7 +1,7 @@
 import os
 
 from typing import Dict, Any, Optional, Callable, List
-from syncly.config.utils import normalize_env_var
+from syncly.utils import normalize_env_var
 
 
 class EnvSettings:

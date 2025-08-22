@@ -3,21 +3,26 @@ import logging
 from typing import Dict, Any
 from collections import defaultdict
 from diffsync.diff import Diff
-from syncly.constants import DUTCH_COLORS, DUTCH_SIZING
 from syncly.config import SynclySettings
 
 from syncly.utils import normalize_string
 
 logger = logging.getLogger(__name__)
 
-
-
-
 class AttributeOrderingDiff(Diff):
 
     @staticmethod
     def _order_sizing_attributes(children: list) -> list:
+        """ Reorder `children` based on their 'value' key, which represents sizes.
+        The order is determined by a custom parsing function that handles
+        numeric ranges, fractions, and predefined size labels"""
         def parse_size(size: str):
+            """ Parse a size string and return a tuple that can be used for sorting.
+            The tuple consists of:
+            - An integer indicating the type of size (0 for numeric, 1 for alpha)
+            - An integer for numeric sizes or a predefined order for alpha sizes
+            - The original size string for alpha sizes.
+            """
             size = size.strip().upper()
 
             if "-" in size and not size.startswith("X"):
@@ -93,16 +98,16 @@ class AttributeOrderingDiff(Diff):
             attribute_groups[attr_name].append(child)
 
         # Order the 'kleuren' group
-        letter_group = attribute_groups.get(DUTCH_COLORS, [])
+        letter_group = attribute_groups.get(settings.ccv_shop.general.color_category, [])
         reference = [normalize_string(x) for x in color_mapping.values()]
-        attribute_groups[DUTCH_COLORS] = cls._order_attributes(
+        attribute_groups[settings.ccv_shop.general.color_category] = cls._order_attributes(
             reference,
             letter_group
         )
 
         # Order the 'maten' group
-        sizing = attribute_groups.get(DUTCH_SIZING, [])
-        attribute_groups[DUTCH_SIZING] = cls._order_sizing_attributes(sizing)
+        sizing = attribute_groups.get(settings.ccv_shop.general.sizing_category, [])
+        attribute_groups[settings.ccv_shop.general.sizing_category] = cls._order_sizing_attributes(sizing)
 
         for childs in attribute_groups.values():
             for child in childs:

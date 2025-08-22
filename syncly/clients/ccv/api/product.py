@@ -12,6 +12,9 @@ class ProductEndpoint(CCVApiEndpoints):
     def patch_product(self, id: str, body: Dict[str, Any]):
         return self.client._patch(f"/api/rest/v1/products/{id}", body)
 
+    def delete_product(self, id:str):
+        return self.client._delete(f"/api/rest/v1/products/{id}")
+
     def get_product(self, id: str):
         return self.client._get(f"/api/rest/v1/products/{id}")
 

@@ -60,18 +60,22 @@ class CCVProduct(Product):
             raise ObjectNotCreated(e)
 
         product_payload = {
-            "name": attrs["name"],
-            "productnumber" : ids["productnumber"],
-            "description": attrs["description"],
-            "package_id": package.id,
-            "brand_id": brand.id,
-            "price": attrs["price"],
+            'name': attrs["name"],
+            'productnumber' : ids["productnumber"],
+            'description': attrs["description"],
+            'package_id': package.id,
+            'brand_id': brand.id,
+            'price': attrs["price"],
+
+            'page_title': attrs["page_title"],
+            'meta_description': attrs["meta_description"],
+            'meta_keywords': attrs['meta_keywords'],
 
             # Defaults we don't check Should also be compared but not for now
-            "photo_size": "BIG",
-            "active": False,
-            "discount": 0,
-            "taxtariff": "normal",
+            'photo_size': "BIG",
+            'active': False,
+            'discount': 0,
+            'taxtariff': "normal",
         }
 
         result = adapter.conn.product.create_product(product_payload)
@@ -80,7 +84,7 @@ class CCVProduct(Product):
         return super().create(adapter, ids, attrs)
 
     def update(self, attrs):
-        """Update implementation of CCV Category"""
+        """Update a product"""
         adapter = cast("CCVShopAdapter", self.adapter)
         if not self.id:
             raise ObjectNotFound("Expected existing object to have an ID")
@@ -104,13 +108,21 @@ class CCVProduct(Product):
             "package_id": package.id if package else None,
             "brand_id": brand.id if brand else None,
             "price": attrs.get("price", None),
+            "page_title": attrs.get("page_title", None),
+            "meta_description": attrs.get("meta_description", None),
+            "meta_keywords": attrs.get("meta_keywords", None)
         }
 
         adapter.conn.product.patch_product(f'{self.id}', {k: v for k, v in update_payload.items() if v})
         return super().update(attrs)
 
     def delete(self):
-        """Delete implementation of CCV Category"""
+        """Deletes an product"""
+        adapter = cast("CCVShopAdapter", self.adapter)
+        if not self.id:
+            raise ValueError("Expected exesting object to have an ID")
+
+        adapter.conn.product.delete_product(f"{self.id}")
         return super().delete()
 
 
