@@ -21,9 +21,6 @@ def main():
     version_parser = subparsers.add_parser("version", help="Prints the version")
     version_parser.set_defaults(func=version.handle)
 
-    diff_parser = subparsers.add_parser("diff", help="Syncs between two Sources")
-    diff.add_arguments(diff_parser)
-    diff_parser.set_defaults(func=diff.handle)
 
     # Perfion client commands
     perfion_parser = subparsers.add_parser("perfion", help="Perfion client commands")
@@ -55,6 +52,10 @@ def main():
     )
     ccv.create_attribute_set_from_txt.add_arguments(create_attr_parser)
     ccv_parser.set_defaults(func=ccv.create_attribute_set_from_txt.handle)
+
+    diff_parser = ccv_subparsers.add_parser("sync-perfion", help="Syncs between two Sources")
+    diff.add_arguments(diff_parser)
+    diff_parser.set_defaults(func=diff.handle)
 
     args = parser.parse_args()
     args.func(args, console)
