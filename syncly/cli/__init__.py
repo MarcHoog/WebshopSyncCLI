@@ -1,6 +1,6 @@
 import argparse
 from rich.console import Console
-from syncly.cli.commands import diff, version, perfion, ccv
+from syncly.cli.commands import version, perfion, ccv
 from syncly.cli.logging import setup_global_logging
 console = Console()
 
@@ -53,9 +53,9 @@ def main():
     ccv.create_attribute_set_from_txt.add_arguments(create_attr_parser)
     ccv_parser.set_defaults(func=ccv.create_attribute_set_from_txt.handle)
 
-    diff_parser = ccv_subparsers.add_parser("sync-perfion", help="Syncs between two Sources")
-    diff.add_arguments(diff_parser)
-    diff_parser.set_defaults(func=diff.handle)
+    sync_perfion_parser = ccv_subparsers.add_parser("sync-perfion", help="Syncs between two Sources")
+    ccv.sync_perfion.add_arguments(sync_perfion_parser)
+    sync_perfion_parser.set_defaults(func=ccv.sync_perfion.handle)
 
     args = parser.parse_args()
     args.func(args, console)
