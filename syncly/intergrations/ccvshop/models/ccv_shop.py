@@ -13,6 +13,7 @@ from syncly.intergrations.ccvshop.models.base import (
 
 )
 
+import json
 import logging
 
 logger = logging.getLogger(__name__)
@@ -78,7 +79,13 @@ class CCVProduct(Product):
             'taxtariff': "normal",
         }
 
-        result = adapter.conn.product.create_product(product_payload)
+        try:
+            result = adapter.conn.product.create_product(product_payload)
+        except Exception as e:
+            logger.error(f"Something went wrong trying to craete product {e} ")
+            logger.error(f"Product Payload {json.dumps(product_payload, indent=4)}")
+            raise ObjectNotCreated(e)
+
         data = cast(dict, result.data)
         attrs['id'] = data['id']
         return super().create(adapter, ids, attrs)

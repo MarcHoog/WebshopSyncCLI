@@ -4,25 +4,12 @@ settings:
       root_category: INTERNAL_DIFFSYNC_MOCK
       base_url: "https://www.vanorsouw.biz"
       color_category: "tricorp-kleuren"
-      sizing_category: "tricorp-sizing"
+      sizing_category: "maten"
   perfion:
     general:
       brand: "Tricorp"
       aditional_categories:
         - "Tricorpwebshop.nl"
-      included_categories:
-        - "Sweaters"
-        - "Poloshirts"
-        - "T-shirts"
-        - "Werkbroeken"
-        - "Jassen"
-        - "Overhemden en Blouses"
-        - "Jeans"
-        - "Overalls"
-        - "Veiligheidsvesten"
-        - "Bodywarmers"
-        - "Ondergoed en Sokken"
-        - "Accesoires"
     mapping:
       color:
         Antramel: grijs-melange
@@ -91,9 +78,9 @@ settings:
         "Werkbroeken": "Werkbroeken"
         "Jassen": "Jacks"
         "Overhemden en Blouses": "Shirts"
-        "Jeans": ""
+        "Jeans": "Werkbroeken"
         "Overalls": "Overalls"
-        "Veiligheidsvesten": ""
-        "Bodywarmers": ""
-        "Accesoires": "Accesoires"
+        "Veiligheidsvesten": "Signaalkleding"
+        "Bodywarmers": "Jacks"
+        "Accessoires": "Accessoires"
         "Ondergoed en Sokken": ""

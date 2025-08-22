@@ -143,7 +143,7 @@ class PerfionAdapter(Adapter):
 
 
     def _get_products(self):
-        categories = self.settings.perfion.general.included_categories
+        included_categories = self.settings.perfion.general.included_categories
         excluded_products = self.settings.perfion.general.excluded_products
 
         try:
@@ -152,11 +152,9 @@ class PerfionAdapter(Adapter):
             logger.error("Something went wrong trying to conact perfion, unable to connect to...")
             exit(1)
 
-        logger.info("Remote Data Loaded...")
-
         for product_data in result.data:
-            if categories and product_data["Category"] not in categories:
-                logger.info(f"Skipping product {product_data.get('ItemNumber')} not in included categories: {categories}")
+            if included_categories and product_data["Category"] not in included_categories:
+                logger.info(f"Skipping product {product_data.get('ItemNumber')} not in included categories: {included_categories}")
                 continue
             if product_data.get("ItemNumber") in excluded_products:
                 logger.info(f"Skipping excluded product: {product_data.get('ItemNumber')}")
@@ -172,6 +170,16 @@ class PerfionAdapter(Adapter):
         This method retrieves product data, creates product instances, and associates
         them with categories, attributes, and photos.
         """
+
+        def parse_meta_description(string):
+
+            string = string.strip("<p>")
+            if len(string) >= 317:
+                string = string[:317]
+
+            return f"{string}..."
+
+
         brand = self.settings.perfion.general.brand
 
         for product_data in self._get_products():
@@ -189,7 +197,7 @@ class PerfionAdapter(Adapter):
                     "brand": normalize_string(brand),
 
                     "page_title": f"{brand} {product_data.get('ItemName', '')} ({product_data.get('ItemNumber', '')})",
-                    "meta_description": product_data.get('Description'),
+                    "meta_description": parse_meta_description(product_data.get('Description', '')),
                 },
             ))
 
