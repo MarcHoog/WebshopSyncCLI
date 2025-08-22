@@ -175,10 +175,13 @@ def handle_ccvshop_integration(args, console):
         sys.exit(1)
 
     enable_console_logging(verbosity=3)
-    console.print("Generating diff...")
+    logger.info(f"Loading Source {args.source}")
     src.load()
+
+    logger.info("Loading DST ccvshop")
     dst.load()
 
+    logger.info("Creating diff")
     diff = src.diff_to(dst, diff_class=AttributeOrderingDiff)
     diff_dict = diff.dict()
     console.print("-" * 30 + " Diff Details " + "-" * 30)
