@@ -21,4 +21,4 @@ where = ["."]
 include = ["syncly*"]
 
 [project.scripts]
-diffsync = "syncly.cli:main"
+syncly = "syncly.cli:main"

@@ -7,6 +7,8 @@ settings:
       sizing_category: "maten"
   perfion:
     general:
+      image_width: 550
+      image_height: 550
       brand: "Tricorp"
       aditional_categories:
         - "Tricorpwebshop.nl"

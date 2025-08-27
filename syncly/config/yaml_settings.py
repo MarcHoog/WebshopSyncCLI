@@ -13,6 +13,8 @@ class CCVShopSettings(BaseModel):
 
 class PerfionGeneral(BaseModel):
     brand: str = ""
+    image_width: int = 550
+    image_height: int = 550
     included_categories: List[str] = []
     excluded_products: List[str] = []
     aditional_categories: List[str] = []

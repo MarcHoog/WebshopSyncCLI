@@ -68,8 +68,8 @@ def handle(args, console: Console):
     cfg = EnvSettings()
     if os.path.exists(".env"):
         cfg.from_env_file(".env")
-    cfg.load_env_vars(["CCVSHOP_API_KEY", "CCVSHOP_API_SECRET", "SETTINGS_PATH"])
-    settings = SynclySettings.from_yaml(cfg.get("SETTINGS_PATH", "settings.yaml"))
+    cfg.load_env_vars(["CCVSHOP_API_KEY", "CCVSHOP_API_SECRET", "SYNCLY_SETTINGS"])
+    settings = SynclySettings.from_yaml(cfg.get("SYNCLY_SETTINGS", "settings.yaml"))
 
     client = CCVClient(cfg, settings)
 

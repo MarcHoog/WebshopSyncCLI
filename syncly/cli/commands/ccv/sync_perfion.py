@@ -156,10 +156,10 @@ def handle(args, console):
     if args.config:
         cfg.from_env_file(args.config)
 
-    cfg.load_env_vars(["CCVSHOP", "SETTINGS_PATH","DISCORD", "PERFION"])
-    settings = SynclySettings.from_yaml(cfg.get("SETTINGS_PATH", "settings.yaml"))
+    cfg.load_env_vars(["CCVSHOP", "SYNCLY_SETTINGS","DISCORD", "PERFION"])
+    settings = SynclySettings.from_yaml(cfg.get("SYNCLY_SETTINGS", "settings.yaml"))
 
-    webhook = cfg.get("DISCORD_WEBHOOK_URL", None)
+    webhook = cfg.get("SYNCLY_WEBHOOK", None)
 
     src = _create_adapter(settings, cfg, PerfionAdapter, PerfionClient, webhook)
     dst = _create_adapter(settings, cfg, CCVShopAdapter, CCVClient, webhook)

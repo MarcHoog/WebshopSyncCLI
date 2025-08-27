@@ -123,12 +123,15 @@ class PerfionAdapter(Adapter):
         """
         Process and add images to the product.
         """
+        image_height = self.settings.perfion.general.image_height
+        image_width = self.settings.perfion.general.image_width
+
         for color, url in product.images:
             if not self.color_mapping.get(color):
                 logger.warning(f"Color {color} cannot be mapped, skipping this Image")
                 continue
             try:
-                b64_img = base64_image_from_url(url)
+                b64_img = base64_image_from_url(url, (image_width, image_height))
             except RequestException:
                 logger.error(f"Failed to fetch image from URL: {url}")
                 continue

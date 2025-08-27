@@ -244,6 +244,29 @@ class CCVProductPhoto(ProductPhoto):
 
         return super().create(adapter, ids, attrs)
 
+
+
+    def update(self, attrs):
+        adapter = cast("CCVShopAdapter", self.adapter)
+        try:
+            product = cast(CCVProduct, adapter.get(CCVProduct, {"productnumber": self.productnumber}))
+        except ObjectNotFound as e:
+            logger.error("Could not find product or attribute value")
+            raise e
+
+        adapter.conn.photos.delete_photo(f"{self.id}")
+        photo_payload = {
+            "file_type": self.file_type,
+            "alttext": self.alttext,
+            "source": attrs['source'],
+        }
+
+        result = adapter.conn.photos.create_photo(f'{product.id}', photo_payload)
+        data = result.data if result.data else {}
+        self.id = data["id"]
+        return super().update(attrs)
+
+
     def delete(self):
         """Delete implementation of CCV Attribute Value to Product"""
         adapter = cast("CCVShopAdapter", self.adapter)

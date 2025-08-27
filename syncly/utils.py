@@ -1,6 +1,6 @@
 import base64
 import requests
-from PIL import Image
+from PIL import Image, ImageOps
 import io
 
 def normalize_string(string: str):
@@ -30,16 +30,16 @@ def base64_endcode_image(path):
         encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
     return encoded_string
 
-def base64_image_from_url(url, target_resolution=(854, 480)):
+def base64_image_from_url(url, target_resolution=(550, 550)):
     """
-    Download an image from a URL, resize it, and encode it as base64.
+    Download an image from a URL, resize and crop to exactly target_resolution, and encode as base64.
     """
     result = requests.get(url)
     result.raise_for_status()
     image = Image.open(io.BytesIO(result.content))
-    image.thumbnail(target_resolution)
+    image = ImageOps.fit(image, target_resolution, Image.Resampling.LANCZOS)
     buffer = io.BytesIO()
-    image.save(buffer, format=image.format)
+    image.save(buffer, format="PNG")
     return base64.b64encode(buffer.getvalue()).decode('utf-8')
 
 def normalize_env_var(name: str) -> str:
