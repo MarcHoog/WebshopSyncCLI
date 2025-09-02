@@ -86,14 +86,14 @@ def xlsx_bytes_to_list(data: bytes, sheet: str | int = 0, include_header: bool =
 
 
 
-def csv_bytes_to_list(data: bytes, include_header: bool = True, encoding: str = "utf-8") -> List[List[Any]]:
+def csv_bytes_to_list(data: bytes, include_header: bool = True, encoding: str = "utf-8", seperator: str = ",") -> List[List[Any]]:
     """
     Convert CSV bytes into a list of lists using pandas.
 
     Returns:
         A list of lists where each inner list is a row.
     """
-    df = pd.read_csv(StringIO(data.decode(encoding)))
+    df = pd.read_csv(StringIO(data.decode(encoding)), sep=seperator)
 
     if include_header:
         return [df.columns.tolist()] + df.values.tolist()

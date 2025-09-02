@@ -90,7 +90,7 @@ class AttributeOrderingDiff(Diff):
         """
 
         settings = SynclySettings.get_instance()
-        color_mapping = settings.perfion.mapping.color
+        color_mapping = settings.mapping.color
 
         attribute_groups: Dict[str, list] = defaultdict(list)
         for child in children.values():

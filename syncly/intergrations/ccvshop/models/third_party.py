@@ -1,7 +1,7 @@
 from typing import List, Tuple
 from syncly.intergrations.ccvshop.models.base import Product
 
-class PerfionProduct(Product):
+class ThirdPartyProduct(Product):
 
     category: str
     colors: List[str] = []

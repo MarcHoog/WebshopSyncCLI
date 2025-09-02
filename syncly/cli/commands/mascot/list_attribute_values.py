@@ -1,17 +1,40 @@
 
 from rich.console import Console
-from rich.table import Table
-
-from syncly.clients.perfion.client import PerfionClient
+from typing import List, Dict, cast
+from syncly.config import EnvSettings, SynclySettings
+from syncly.clients.mascot.client import InMemoryFTPClient
+from syncly.intergrations.ccvshop.adapters.adapter_mascot import MascotAdapter
+from syncly.cli.helpers import helper_list_attribute_values
 
 def add_arguments(parser):
     """
     Add arguments for the 'list-values' command.
     """
     parser.add_argument(
-        "attribute_name",
+        "attribute",
         type=str,
         help="Name of the Perfion attribute to list possible values for",
+    )
+
+    parser.add_argument(
+        "--env-file",
+        type=str,
+        help="Path to environment file",
+        required=False
+    )
+
+    parser.add_argument(
+        "--product-info-file",
+        type=str,
+        help="FTP path to product info file",
+        required=True,
+    )
+
+    parser.add_argument(
+        "--stock-file",
+        type=str,
+        help="FTP path to product stock file",
+        required=True,
     )
 
 def handle(args, console: Console):
@@ -24,35 +47,25 @@ def handle(args, console: Console):
     """
     attribute = args.attribute_name
 
-    console.print(f"Fetching all Perfion products to collect values for [bold cyan]{attribute}[/bold cyan]...", style="dim")
-    client = PerfionClient()
-    result = client.get_products(per_page=1000, total_pages=-1)
 
-    if not result.data:
-        console.print("[yellow]No products returned from Perfion[/yellow]")
-        return
+    env = EnvSettings()
+    if args.env_file:
+        env.from_env_file(args.env_file)
 
-    values = []
-    missing_count = 0
-    for product in result.data:
-        val = product.get(attribute)
-        if val is None:
-            missing_count += 1
-        else:
-            values.append(val)
+    env.load_env_vars(["MASCOT"])
 
-    if not values:
-        console.print(f"[red]No values found for attribute '{attribute}'[/red]")
-        return
+    client = InMemoryFTPClient(
+        host=env.get("MASCOT_FTP_HOST"),
+        user=env.get("MASCOT_FTP_USER"),
+        password=env.get("MASCOT_FTP_PASSWORD")
+    )
 
-    unique_values = sorted(set(values))
+    settings = SynclySettings()
+    settings.mascot.availability = args.stock_file
+    settings.mascot.product_data = args.product_info_file
 
-    table = Table(title=f"{attribute}", caption="all found values", box=None)
-    table.add_column("Value", style="green")
-    for val in unique_values:
-        table.add_row(str(val))
+    adapter = MascotAdapter(cfg=env, settings=settings, client=client)
 
-    console.print(table)
-
-    if missing_count:
-        console.print(f"[yellow]{missing_count} product(s) missing attribute '{attribute}'[/yellow]")
+    console.print(f"Fetching all Mascot products to collect values for [bold cyan]{attribute}[/bold cyan]...", style="dim")
+    result = cast(List[Dict], adapter._get_products())
+    helper_list_attribute_values(console, result, attribute)

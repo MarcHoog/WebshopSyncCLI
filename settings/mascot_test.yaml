@@ -1,0 +1,7 @@
+settings:
+  mascot:
+    brand: "Mascot"
+    aditional_categories:
+      - "Mascotwebshop.nl"
+    product_data: ./MASCOT_extended_productdata_NL.xlsx
+    availability: ./MASCOT_MATERIAL_AVAILABILITY.CSV

@@ -2,8 +2,6 @@ from typing import List, Dict, Optional
 from pydantic import BaseModel
 import yaml
 
-
-
 class CCVShopSettings(BaseModel):
     root_category: str = ""
     url: str = ""
@@ -11,9 +9,9 @@ class CCVShopSettings(BaseModel):
     sizing_category: str = ""
     image_width: int = 550
     image_height: int = 550
+    aditional_categories: List[str] = []
 
-
-class PerfionMapping(BaseModel):
+class Mapping(BaseModel):
     color: Dict[str, str] = {}
     category: Dict[str, str] = {}
     size: Dict[str, str] = {}
@@ -23,15 +21,19 @@ class PerfionSettings(BaseModel):
     brand: str = ""
     included_categories: List[str] = []
     excluded_products: List[str] = []
-    aditional_categories: List[str] = []
-    mapping: PerfionMapping
 
+class MascotSettings(BaseModel):
+    availability: str = ""
+    product_data: str = ""
+    brand: str = ""
 
 class SynclySettings(BaseModel):
     _instance: Optional["SynclySettings"] = None
 
-    ccv_shop: CCVShopSettings
-    perfion: PerfionSettings
+    ccv_shop: CCVShopSettings = CCVShopSettings()
+    perfion: PerfionSettings = PerfionSettings()
+    mascot: MascotSettings = MascotSettings()
+    mapping: Mapping = Mapping()
 
 
 
