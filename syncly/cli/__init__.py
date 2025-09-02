@@ -25,15 +25,6 @@ def main():
     # Perfion client commands
     perfion_parser = subparsers.add_parser("perfion", help="Perfion client commands")
     perfion_subparsers = perfion_parser.add_subparsers(dest="perfion_cmd", required=True)
-
-    list_parser = perfion_subparsers.add_parser("list-attributes", help="List attributes for an item")
-    perfion.list_attributes.add_arguments(list_parser)
-    list_parser.set_defaults(func=perfion.list_attributes.handle)
-
-    cat_parser = perfion_subparsers.add_parser("list-categories", help="List all Perfion categories")
-    perfion.list_categories.add_arguments(cat_parser)
-    cat_parser.set_defaults(func=perfion.list_categories.handle)
-
     values_parser = perfion_subparsers.add_parser(
         "list-values",
         help="List all possible values for a given attribute across all products",
@@ -41,8 +32,6 @@ def main():
     perfion.list_attribute_values.add_arguments(values_parser)
     values_parser.set_defaults(func=perfion.list_attribute_values.handle)
 
-
-    ## CCV client commands
     ccv_parser = subparsers.add_parser("ccv", help="CCV client commands")
     ccv_subparsers = ccv_parser.add_subparsers(dest="ccv_cmd", required=True)
 
