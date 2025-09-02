@@ -2,7 +2,7 @@ import os
 from rich.console import Console
 from syncly.clients.ccv.client import CCVClient
 from syncly.config.yaml_settings import SynclySettings
-from syncly.utils import get_env
+from syncly.utils import get_env, load_env_files
 
 
 def add_arguments(parser):
@@ -26,6 +26,13 @@ def add_arguments(parser):
         type=str,
         default="option_menu",
         help="Type of the attribute set (default: 'option_menu'). Other types can be specified as needed.",
+    )
+
+    parser.add_argument(
+        "--env-file",
+        type=str,
+        help="Path to environment file",
+        required=False
     )
 
 def parse_txt_file(txt_file):
@@ -63,7 +70,8 @@ def handle(args, console: Console):
         console.print(f"Creating attribute set from: [bold cyan]{txt_file}[/bold cyan]")
 
 
-
+    if args.env_file:
+        load_env_files(args.env_file)
 
     settings = SynclySettings.from_yaml(get_env("SYNCLY_SETTINGS", "settings.yaml"))
     client = CCVClient(
