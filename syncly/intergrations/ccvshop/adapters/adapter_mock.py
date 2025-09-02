@@ -3,7 +3,6 @@ import json
 import os
 from typing import Optional
 from diffsync import Adapter
-from syncly.config import EnvSettings
 from syncly.intergrations.ccvshop.models.base import Product, CategoryToDevice, AttributeValueToProduct, ProductPhoto
 from syncly.utils import normalize_string, base64_endcode_image
 
@@ -19,22 +18,14 @@ class MockAdapter(Adapter):
 
     top_level = ["product"]
 
-    def __init__(self, *args, cfg: Optional[EnvSettings]= None, mock_file_path: Optional[str] = None, **kwargs,):
+    def __init__(self, *args, mock_file_path: Optional[str] = None, **kwargs,):
         super().__init__(*args, **kwargs)
-
-        if not cfg:
-            cfg = EnvSettings()
-            cfg.load_env_vars(["MOCK"])
-
-        if not mock_file_path:
-            mock_file_path = cfg.get("MOCK_FILE_PATH")
 
 
         if not mock_file_path:
             raise ValueError("Expected `MOCK_FILE_PATH` to exist in config")
 
 
-        self.cfg = cfg
         self.mock_file_path = mock_file_path
 
     def setup(self):

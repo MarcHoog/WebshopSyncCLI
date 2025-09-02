@@ -8,21 +8,20 @@ import logging
 import sys
 from rich.text import Text
 
-from typing import Optional
 from diffsync.logging import enable_console_logging
 from diffsync.enum import DiffSyncFlags
 from syncly.clients.ccv.client import CCVClient
 from syncly.clients.perfion.client import PerfionClient
 from syncly.intergrations.ccvshop.adapters.adapter_ccv import CCVShopAdapter
 from syncly.intergrations.ccvshop.diff import AttributeOrderingDiff
-from syncly.config import EnvSettings, SynclySettings
+from syncly.config import SynclySettings
 from syncly.intergrations.ccvshop.adapters.adapter_perfion import PerfionAdapter
 from syncly.webhook import send_discord_webhook
+from syncly.utils import get_env, load_env_files
 
-
-def _fatal(err_msg, webhook=None):
+def _fatal(err_msg):
     logging.error(err_msg)
-    if webhook:
+    if webhook := get_env("SYNCLY_WEBHOOK"):
            send_discord_webhook(
             webhook_url=webhook,
             status="error",
@@ -32,23 +31,23 @@ def _fatal(err_msg, webhook=None):
 
     sys.exit(1)
 
-def _create_adapter(settings: SynclySettings, cfg: EnvSettings, Adapter, client, webhook:Optional[str] = None):
+def _create_adapter(settings: SynclySettings, Adapter, client):
     logging.info(f"Setting up {Adapter} adapter...")
     try:
-        adapter = Adapter(cfg=cfg, settings=settings, client=client)
+        adapter = Adapter(settings=settings, client=client)
     except ValueError as e:
         err_msg = f"Something went wrong setting creating an adapter {Adapter}: {e}"
-        _fatal(err_msg, webhook)
+        _fatal(err_msg)
 
     return adapter # type: ignore
 
-def _load(adapter, webhook: Optional[str]=None):
+def _load(adapter):
     logging.info(f"Loading in data using: {adapter}. ")
     try:
         adapter.load()
     except Exception as e:
         err_msg  = f"Something went wrong loading in data into {adapter}: {e}"
-        _fatal(err_msg, webhook)
+        _fatal(err_msg)
     return adapter
 
 
@@ -151,35 +150,29 @@ def handle(args, console):
         console: Rich console for output.
     """
 
-    cfg = EnvSettings()
     if args.config:
-        cfg.from_env_file(args.config)
+        load_env_files(args.config)
 
-    cfg.load_env_vars(["CCVSHOP", "SYNCLY_SETTINGS", "PERFION"])
-    settings = SynclySettings.from_yaml(cfg.get("SYNCLY_SETTINGS", "settings.yaml"))
-    webhook = cfg.get("SYNCLY_WEBHOOK")
+    settings = SynclySettings.from_yaml(get_env("SYNCLY_SETTINGS", "settings.yaml"))
 
     src = _create_adapter(
         settings,
-        cfg,
         PerfionAdapter,
         PerfionClient(api_url=settings.perfion.url),
-        webhook
     )
 
     dst = _create_adapter(
         settings,
-        cfg,
         CCVShopAdapter,
         CCVClient(
-            cfg.get("CCVSHOP_PUBLIC_KEY"),
-            cfg.get("CCVSHOP_PRIVATE_KEY"),
+            get_env("CCVSHOP_PUBLIC_KEY"),
+            get_env("CCVSHOP_PRIVATE_KEY"),
             settings.ccv_shop.url
         ),
-        webhook)
+    )
 
-    _load(src, webhook)
-    _load(dst, webhook)
+    _load(src)
+    _load(dst)
 
     logger.info("Creating diff")
     diff = src.diff_to(dst, diff_class=AttributeOrderingDiff)

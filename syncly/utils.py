@@ -2,10 +2,14 @@ import base64
 import requests
 import io
 import pandas as pd
+import os
+import logging
 
 from io import BytesIO, StringIO
 from PIL import Image, ImageOps
-from typing import List, Any
+from typing import List, Any, Optional, Callable
+
+logger = logging.getLogger(__name__)
 
 def normalize_string(string: str):
     """
@@ -99,3 +103,53 @@ def csv_bytes_to_list(data: bytes, include_header: bool = True, encoding: str = 
         return [df.columns.tolist()] + df.values.tolist()
     else:
         return df.values.tolist()
+
+def load_env_files(*paths: str):
+    """
+    Load configuration from a `.env`-style file.
+    Parses key=value lines, ignoring comments and blank lines.
+    And updates os.environ accordingly using update
+
+    Returns:
+        Dict: Os.environ
+    """
+    data = {}
+
+    for path in paths:
+        if os.path.exists(path):
+            with open(path) as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith("#") and "=" in line:
+                        k, v = line.split("=", 1)
+                        data[normalize_env_var(k)] = v.strip().strip('"').strip("'")
+        else:
+            logger.error("Couldn't find path skipping file")
+
+    os.environ.update(data)
+    return os.environ
+
+def get_env(
+    key: str,
+    default: Any = None,
+    cast: Optional[Callable[[str], Any]] = None,
+) -> Any:
+    """
+    Get a configuration value with optional default and casting.
+
+    Args:
+        key (str): The configuration key to retrieve.
+        default (Any, optional): The default value if key is not found. Defaults to None.
+        cast (Optional[Callable[[str], Any]], optional): A function to cast the string value. Defaults to None.
+
+    Returns:
+        Any: The casted configuration value or default if missing or cast fails.
+    """
+    raw_value = os.environ.get(normalize_env_var(key))
+    if raw_value is not None:
+        try:
+            return cast(raw_value) if cast else raw_value
+        except Exception:
+            logger.error("Something went wrong casting value returning default")
+            return default
+    return default

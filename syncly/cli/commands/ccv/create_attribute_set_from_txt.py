@@ -1,8 +1,8 @@
 import os
 from rich.console import Console
 from syncly.clients.ccv.client import CCVClient
-from syncly.config.env_settings import EnvSettings
 from syncly.config.yaml_settings import SynclySettings
+from syncly.utils import get_env
 
 
 def add_arguments(parser):
@@ -65,13 +65,12 @@ def handle(args, console: Console):
 
 
 
-    cfg = EnvSettings()
-    if os.path.exists(".env"):
-        cfg.from_env_file(".env")
-    cfg.load_env_vars(["CCVSHOP_API_KEY", "CCVSHOP_API_SECRET", "SYNCLY_SETTINGS"])
-    settings = SynclySettings.from_yaml(cfg.get("SYNCLY_SETTINGS", "settings.yaml"))
-
-    client = CCVClient(cfg, settings)
+    settings = SynclySettings.from_yaml(get_env("SYNCLY_SETTINGS", "settings.yaml"))
+    client = CCVClient(
+        get_env("CCVSHOP_PUBLIC_KEY"),
+        get_env("CCVSHOP_PRIVATE_KEY"),
+        settings.ccv_shop.url
+    )
 
     body = {
         "name": set_name,

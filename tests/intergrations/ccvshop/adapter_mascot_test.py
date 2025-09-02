@@ -1,18 +1,19 @@
 import pytest
 from syncly.intergrations.ccvshop.adapters.adapter_mascot import MascotAdapter
 from syncly.clients.mascot.client import InMemoryFTPClient
-from syncly.config import EnvSettings, SynclySettings
+from syncly.config import SynclySettings
+from syncly.utils import get_env, load_env_files
 
 @pytest.fixture
 def mascot_adapter() -> MascotAdapter:
     settings = SynclySettings.from_yaml("settings/mascot_test.yaml")
-    cfg = EnvSettings().from_env_file(".env")
+    load_env_files(".env")
     client = InMemoryFTPClient(
-        host=cfg.get("MASCOT_FTP_HOST"),
-        user=cfg.get("MASCOT_FTP_USER"),
-        password=cfg.get("MASCOT_FTP_PASSWORD")
+        host=get_env("MASCOT_FTP_HOST"),
+        user=get_env("MASCOT_FTP_USER"),
+        password=get_env("MASCOT_FTP_PASSWORD")
     )
-    adapter = MascotAdapter(cfg=cfg, settings=settings, client=client)
+    adapter = MascotAdapter(settings=settings, client=client)
     return adapter
 
 @pytest.mark.integration

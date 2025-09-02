@@ -18,7 +18,7 @@ from syncly.intergrations.ccvshop.models.base import (
 
 logger = logging.getLogger(__name__)
 
-from syncly.config import EnvSettings, SynclySettings
+from syncly.config import SynclySettings
 
 class ThirdPartyAdapter(Adapter):
 
@@ -35,12 +35,10 @@ class ThirdPartyAdapter(Adapter):
         return "ThirdPartyAdapter"
 
     def __init__(self, *args,
-        cfg: Optional[EnvSettings]= None,
         settings:Optional[SynclySettings] = None,
         client: Optional[Any] = None
     ):
 
-        self.cfg = cfg or EnvSettings()
         self.settings = settings or SynclySettings()
         self.conn = client
 
