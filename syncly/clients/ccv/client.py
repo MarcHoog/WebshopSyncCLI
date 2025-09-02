@@ -17,32 +17,20 @@ from syncly.clients.ccv.api.product_to_attribute import ProductToAttributeEndpoi
 from syncly.clients.ccv.api.product_photos import ProductPhotoEndpoint
 from syncly.clients.ccv.api.brands import BrandEndpoint
 from syncly.clients.ccv.models import CCVShopResult
-from syncly.config import EnvSettings, SynclySettings
-
 
 logger = logging.getLogger(__name__)
-
 class CCVClient():
 
     def __init__(self,
-                 cfg: EnvSettings,
-                 settings: SynclySettings,
+                 public_key: str,
+                 secret_key: str,
                  base_url: Optional[str] = None,
                  verify_ssl: bool = True):
 
-
-
-        if not cfg.verify("CCVSHOP_PRIVATE_KEY", "CCVSHOP_PUBLIC_KEY"):
-            raise ValueError("CCVSHOP_PRIVATE_KEY and or CCVSHOP_PUBLIC_KEY should be passed or defined in environment Variables or passed through config")
-
-        if not base_url and settings.ccv_shop.general.base_url:
-            base_url = settings.ccv_shop.general.base_url
-        else:
-            raise ValueError("ccv_shop.general.base_url should be defined in settings.yaml or passed as base_url")
-
-        self.cfg = cfg
-        public_key = self.cfg.get("CCVSHOP_PUBLIC_KEY")
-        secret_key = self.cfg.get("CCVSHOP_PRIVATE_KEY")
+        if not public_key or not secret_key:
+            raise ValueError("public_key and or secret_key should be passed or defined in environment Variables or passed through config")
+        if not base_url:
+            raise ValueError("base url cannot be None")
 
         base_url = base_url.strip('/')
         self.auth = CCVAuth(base_url, public_key, secret_key)

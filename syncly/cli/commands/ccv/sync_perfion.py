@@ -32,10 +32,9 @@ def _fatal(err_msg, webhook=None):
 
     sys.exit(1)
 
-def _create_adapter(settings: SynclySettings, cfg: EnvSettings, Adapter, Client, webhook:Optional[str] = None):
+def _create_adapter(settings: SynclySettings, cfg: EnvSettings, Adapter, client, webhook:Optional[str] = None):
     logging.info(f"Setting up {Adapter} adapter...")
     try:
-        client = Client(cfg=cfg, settings=settings)
         adapter = Adapter(cfg=cfg, settings=settings, client=client)
     except ValueError as e:
         err_msg = f"Something went wrong setting creating an adapter {Adapter}: {e}"
@@ -156,13 +155,28 @@ def handle(args, console):
     if args.config:
         cfg.from_env_file(args.config)
 
-    cfg.load_env_vars(["CCVSHOP", "SYNCLY_SETTINGS","DISCORD", "PERFION"])
+    cfg.load_env_vars(["CCVSHOP", "SYNCLY_SETTINGS", "PERFION"])
     settings = SynclySettings.from_yaml(cfg.get("SYNCLY_SETTINGS", "settings.yaml"))
+    webhook = cfg.get("SYNCLY_WEBHOOK")
 
-    webhook = cfg.get("SYNCLY_WEBHOOK", None)
+    src = _create_adapter(
+        settings,
+        cfg,
+        PerfionAdapter,
+        PerfionClient(api_url=settings.perfion.url),
+        webhook
+    )
 
-    src = _create_adapter(settings, cfg, PerfionAdapter, PerfionClient, webhook)
-    dst = _create_adapter(settings, cfg, CCVShopAdapter, CCVClient, webhook)
+    dst = _create_adapter(
+        settings,
+        cfg,
+        CCVShopAdapter,
+        CCVClient(
+            cfg.get("CCVSHOP_PUBLIC_KEY"),
+            cfg.get("CCVSHOP_PRIVATE_KEY"),
+            settings.ccv_shop.url
+        ),
+        webhook)
 
     _load(src, webhook)
     _load(dst, webhook)

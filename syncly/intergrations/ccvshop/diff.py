@@ -98,16 +98,16 @@ class AttributeOrderingDiff(Diff):
             attribute_groups[attr_name].append(child)
 
         # Order the 'kleuren' group
-        letter_group = attribute_groups.get(settings.ccv_shop.general.color_category, [])
+        letter_group = attribute_groups.get(settings.ccv_shop.color_category, [])
         reference = [normalize_string(x) for x in color_mapping.values()]
-        attribute_groups[settings.ccv_shop.general.color_category] = cls._order_attributes(
+        attribute_groups[settings.ccv_shop.color_category] = cls._order_attributes(
             reference,
             letter_group
         )
 
         # Order the 'maten' group
-        sizing = attribute_groups.get(settings.ccv_shop.general.sizing_category, [])
-        attribute_groups[settings.ccv_shop.general.sizing_category] = cls._order_sizing_attributes(sizing)
+        sizing = attribute_groups.get(settings.ccv_shop.sizing_category, [])
+        attribute_groups[settings.ccv_shop.sizing_category] = cls._order_sizing_attributes(sizing)
 
         for childs in attribute_groups.values():
             for child in childs:

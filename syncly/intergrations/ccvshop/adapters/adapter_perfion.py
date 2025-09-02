@@ -25,18 +25,7 @@ logger = logging.getLogger(__name__)
 class PerfionAdapter(Adapter):
     """
     Perfion Adapter for DiffSync.
-
     This adapter integrates Perfion product data into the DiffSync framework.
-
-    Attributes:
-        product: The product model.
-        category_to_device: The category-to-device model.
-        attribute_value_to_product: The attribute-value-to-product model.
-        product_photo: The product photo model.
-        top_level: List of top-level models.
-        sizing_mapping: Mapping for product sizing.
-        color_mapping: Mapping for product colors.
-        category_mapping: Mapping for product categories.
     """
 
     _lock = threading.Lock()
@@ -66,8 +55,8 @@ class PerfionAdapter(Adapter):
         """
         super().__init__(*args, **kwargs)
 
-        if not settings.ccv_shop.general.root_category and not settings.perfion.general.brand:
-            raise ValueError("ccv_shop.general.root_cateory or perfion.general.brand is not set in settings.yaml")
+        if not settings.ccv_shop.root_category and not settings.perfion.brand:
+            raise ValueError("ccv_shop.root_cateory or perfion.brand is not set in settings.yaml")
 
         self.cfg = cfg
         self.settings = settings
@@ -82,12 +71,12 @@ class PerfionAdapter(Adapter):
         """
         Process and add all relevant categories to the product.
         """
-        categories = [self.settings.ccv_shop.general.root_category]
+        categories = [self.settings.ccv_shop.root_category]
         if mapped := self.category_mapping.get(product.category):
             categories.append(mapped)
         else:
             logger.warning(f"Matching product category not found for: {product.category}")
-        categories.extend(self.settings.perfion.general.aditional_categories)
+        categories.extend(self.settings.perfion.aditional_categories)
         for category in categories:
             cat_obj, _ = self.get_or_instantiate(
                 self.category_to_device,
@@ -123,8 +112,8 @@ class PerfionAdapter(Adapter):
         """
         Process and add images to the product.
         """
-        image_height = self.settings.perfion.general.image_height
-        image_width = self.settings.perfion.general.image_width
+        image_height = self.settings.ccv_shop.image_height
+        image_width = self.settings.ccv_shop.image_width
 
         for color, url in product.images:
             if not self.color_mapping.get(color):
@@ -149,8 +138,8 @@ class PerfionAdapter(Adapter):
 
 
     def _get_products(self):
-        included_categories = self.settings.perfion.general.included_categories
-        excluded_products = self.settings.perfion.general.excluded_products
+        included_categories = self.settings.perfion.included_categories
+        excluded_products = self.settings.perfion.excluded_products
 
         try:
             result = self.conn.get_products()
@@ -186,7 +175,7 @@ class PerfionAdapter(Adapter):
             return f"{string}..."
 
 
-        brand = self.settings.perfion.general.brand
+        brand = self.settings.perfion.brand
 
         for product_data in self._get_products():
 
@@ -226,8 +215,8 @@ class PerfionAdapter(Adapter):
         """
         logger.debug(f"Processing: {product.productnumber}: {product.name}")
         self.process_categories(product)
-        self.process_mapped_attributes(product, self.sizing_mapping, product.sizing, self.settings.ccv_shop.general.sizing_category)
-        self.process_mapped_attributes(product, self.color_mapping, product.colors, self.settings.ccv_shop.general.color_category)
+        self.process_mapped_attributes(product, self.sizing_mapping, product.sizing, self.settings.ccv_shop.sizing_category)
+        self.process_mapped_attributes(product, self.color_mapping, product.colors, self.settings.ccv_shop.color_category)
         self.process_images(product)
 
     def load(self):

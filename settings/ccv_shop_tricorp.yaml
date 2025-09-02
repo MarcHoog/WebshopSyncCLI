@@ -1,17 +1,16 @@
 settings:
   ccv_shop:
-    general:
-      root_category: INTERNAL_SYNC_TRICORP
-      base_url: "https://www.vanorsouw.biz"
-      color_category: "tricorp-kleuren"
-      sizing_category: "maten"
+    root_category: INTERNAL_SYNC_TRICORP
+    url: "https://www.vanorsouw.biz"
+    color_category: "tricorp-kleuren"
+    sizing_category: "maten"
+    image_width: 550
+    image_height: 550
   perfion:
-    general:
-      image_width: 550
-      image_height: 550
-      brand: "Tricorp"
-      aditional_categories:
-        - "Tricorpwebshop.nl"
+    url: "https://perfion.tricorp.com:85/Perfion/GetData.asmx"
+    brand: "Tricorp"
+    aditional_categories:
+      - "Tricorpwebshop.nl"
     mapping:
       color:
         Antramel: grijs-melange

@@ -1,7 +1,11 @@
 import base64
 import requests
-from PIL import Image, ImageOps
 import io
+import pandas as pd
+
+from io import BytesIO, StringIO
+from PIL import Image, ImageOps
+from typing import List, Any
 
 def normalize_string(string: str):
     """
@@ -63,3 +67,35 @@ def normalize_env_var(name: str) -> str:
         if not normalized[0].isalpha() or normalized[0] == '_':
             normalized = '_' + normalized
     return normalized.upper()
+
+
+
+def xlsx_bytes_to_list(data: bytes, sheet: str | int = 0, include_header: bool = True) -> List[List[Any]]:
+    """
+    Convert Excel bytes into a list of lists using pandas.
+
+    Returns:
+        A list of lists where each inner list is a row.
+    """
+    df = pd.read_excel(BytesIO(data), sheet_name=sheet)
+
+    if include_header:
+        return [df.columns.tolist()] + df.values.tolist()
+    else:
+        return df.values.tolist()
+
+
+
+def csv_bytes_to_list(data: bytes, include_header: bool = True, encoding: str = "utf-8") -> List[List[Any]]:
+    """
+    Convert CSV bytes into a list of lists using pandas.
+
+    Returns:
+        A list of lists where each inner list is a row.
+    """
+    df = pd.read_csv(StringIO(data.decode(encoding)))
+
+    if include_header:
+        return [df.columns.tolist()] + df.values.tolist()
+    else:
+        return df.values.tolist()

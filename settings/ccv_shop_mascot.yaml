@@ -1,0 +1,14 @@
+settings:
+  ccv_shop:
+    root_category: INTERNAL_SYNC_MASCOT
+    base_url: "https://www.vanorsouw.biz"
+    color_category: "mascot-kleuren"
+    sizing_category: "maten"
+    image_width: 550
+    image_height: 550
+  mascot:
+    brand: "Mascot"
+    aditional_categories:
+      - "Mascotwebshop.nl"
+    productdata: MASCOT_extended_productdata_NL.xlsx
+    availability: MASCOT_MATERIAL_AVAILABILITY.CSV

@@ -48,8 +48,8 @@ class CCVShopAdapter(Adapter):
     def __init__(self, *args, cfg: EnvSettings, settings: SynclySettings, client: CCVClient, **kwargs,):
         super().__init__(*args, **kwargs)
 
-        if not settings.ccv_shop.general.root_category:
-            raise ValueError("ccv_shop.general.root_category is not set in settings")
+        if not settings.ccv_shop.root_category:
+            raise ValueError("ccv_shop.root_category is not set in settings")
 
         self.cfg = cfg
         self.settings = settings
@@ -98,7 +98,7 @@ class CCVShopAdapter(Adapter):
                     {"id": c.get("id")  },
                 ))
 
-                if category.name == self.settings.ccv_shop.general.root_category:
+                if category.name == self.settings.ccv_shop.root_category:
                     self.root_category = category
 
                 self.category_map[category.id] = category
@@ -139,7 +139,7 @@ class CCVShopAdapter(Adapter):
         """Load all articles by calling other methods"""
 
         if not self.root_category:
-            raise ValueError(f"Root category of name {self.settings.ccv_shop.general.root_category} is not defined")
+            raise ValueError(f"Root category of name {self.settings.ccv_shop.root_category} is not defined")
 
         logger.info(f"Gathering products from root category: {self.root_category.name} | {self.root_category.id}")
         products = self.conn.product.get_products_by_categories(f"{self.root_category.id}", total_pages=-1)
