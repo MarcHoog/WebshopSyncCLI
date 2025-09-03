@@ -1,6 +1,6 @@
 import argparse
 from rich.console import Console
-from syncly.cli.commands import version, perfion, ccv
+from syncly.cli.commands import version, perfion, ccv, mascot
 from syncly.cli.logging import setup_global_logging
 console = Console()
 
@@ -32,9 +32,20 @@ def main():
     perfion.list_attribute_values.add_arguments(values_parser)
     values_parser.set_defaults(func=perfion.list_attribute_values.handle)
 
+    mascot_parser = subparsers.add_parser("mascot", help="Mascot client Commands")
+    mascot_subparsers = mascot_parser.add_subparsers(dest="mascot_cmd", required=True)
+    mascot_value_parser = mascot_subparsers.add_parser(
+        "list-values",
+        help="List all possible values for a given attribute across all products",
+    )
+
+    mascot.list_attribute_values.add_arguments(mascot_value_parser)
+    mascot_value_parser.set_defaults(func=mascot.list_attribute_values)
+
+
+    # CCV commands
     ccv_parser = subparsers.add_parser("ccv", help="CCV client commands")
     ccv_subparsers = ccv_parser.add_subparsers(dest="ccv_cmd", required=True)
-
     create_attr_parser = ccv_subparsers.add_parser(
         "create-attribute-set-from-txt",
         help="Create a CCV attribute set from a TXT file"

@@ -1,3 +1,3 @@
-from . import version, perfion, ccv
+from . import version, perfion, ccv, mascot
 
-__all__ = ["version", "perfion", "ccv"]
+__all__ = ["version", "perfion", "ccv", "mascot"]
