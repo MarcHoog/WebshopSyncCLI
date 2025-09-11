@@ -1,4 +1,6 @@
 import logging
+
+from pydantic import ValidationError
 from syncly.intergrations.ccvshop.models.third_party import ThirdPartyProduct
 from syncly.utils import (
     wrap_style,
@@ -6,7 +8,10 @@ from syncly.utils import (
     csv_bytes_to_list,
     normalize_string,
     append_if_not_exists,
+    to_float,
+    pretty_validation_error
 )
+from enum import Enum
 from typing import TypedDict, Optional, List, Any, Union, Generator, Tuple, cast
 from syncly.intergrations.ccvshop.adapters.adapter_third_party import ThirdPartyAdapter
 
@@ -113,7 +118,85 @@ class ProductRow(TypedDict, total=False):
     stock_status: Optional[str]
     reorder_status: Optional[int]
 
+class StockFlag(str, Enum):
+    GREEN = "g"
+    YELLOW = "y"
+
+FIELDS: List[str] = list(ProductRow.__annotations__.keys())
+
+def _build_name(pd: ProductRow, brand_normalized: str) -> str:
+    parts = [brand_normalized, pd.get("article_quality_number")]
+    if pd.get("product_name_old"):
+        pn_old = pd["product_name_old"] # type: ignore |
+        pn_old_parts = pn_old.split(" ")
+        pn_old = " ".join(pn_old_parts[1:])
+        parts.append(pn_old)
+
+    parts.append(pd.get("product_type"))
+    return " ".join(str(p) for p in parts if p)
+
+def _build_description(pd: ProductRow) -> str:
+    items = [item.strip() for item in str(pd.get('usp_text', "")).split(';') if item.strip()]
+    list_items = "\n  ".join(f"<li>{item}</li>" for item in items)
+    formated_usp_text =  f"<ul>\n  {list_items}\n</ul>"
+    technical_text = pd.get('technical_text', "")
+
+    return f"""
+        {technical_text}
+        <br>
+
+        {formated_usp_text}
+    """
+
+
+def _build_meta_description(pd: ProductRow) -> str:
+    technical_text = pd.get('technical_text', "") or ""
+    if len(technical_text) >= 317:
+        technical_text = technical_text[:317]
+
+    return f"{technical_text}..."
+
+
+
+def _get_price(pd: ProductRow) -> float:
+    raw = pd.get("price")
+    if raw is None or raw == "":
+        return 0.0
+    try:
+        return to_float(str(raw))
+    except Exception:
+        logger.warning("Failed to parse price %r; defaulting to 0.0", raw)
+        return 0.0
+
+
+def _is_stocked(pd: ProductRow) -> bool:
+    flag = f"{pd.get('stock_status', '')}".strip().lower()
+    if flag in {StockFlag.GREEN.value, StockFlag.YELLOW.value}:
+        try:
+            return int(pd.get("reorder_status") or 0) == 1
+        except (TypeError, ValueError):
+            return False
+    return False
+
+def _create_availablity_mapping(csv_bytes) -> Any:
+    availability_data = {
+        x[0]: {
+            "stock_status": x[1],
+            "reorder_status": x[3],
+        }
+        for x in csv_bytes_to_list(
+            csv_bytes,
+            include_header=False,
+            seperator=";",
+        )
+    }
+
+    return availability_data
+
 class MascotAdapter(ThirdPartyAdapter):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
     def __str__(self):
         return "MascotAdapter"
@@ -122,25 +205,21 @@ class MascotAdapter(ThirdPartyAdapter):
         assert self.conn
 
         with self.conn as client:
-            files = client.list_files()
-            for f in [self.settings.mascot.product_data, self.settings.mascot.availability]:
-                if f not in files:
-                    raise ValueError(f"Expected file {f} to exist in {files}")
+            files = set(client.list_files())
+            required = {self.settings.mascot.product_data, self.settings.mascot.availability}
+            missing = required - files
+            if missing:
+                raise ValueError(f"Missing files: {sorted(missing)} (found: {sorted(files)})")
 
             product_data: List[List[Any]] = xlsx_bytes_to_list(
                 client.download_file(self.settings.mascot.product_data),
                 include_header=False
             )
-            availability_data = {
-                x[0]: {
-                    "stock_status": x[1],
-                    "reorder_status": x[3],
-                }
-                for x in csv_bytes_to_list(
-                    client.download_file(self.settings.mascot.availability),
-                    include_header=False, seperator=";"
-                )
-            }
+
+            availablity_csv = client.download_file(
+                self.settings.mascot.availability,
+            )
+            availability_data = _create_availablity_mapping(availablity_csv)
 
             product_rows = []
             for product in product_data:
@@ -159,34 +238,39 @@ class MascotAdapter(ThirdPartyAdapter):
 
         return product_rows
 
-
     def load_products(self):
 
-        brand = self.settings.mascot.brand
+        brand = self.settings.ccv_shop.brand
 
+        for pd in self._get_products():
+            if _is_stocked(pd):
+                name = _build_name(pd, brand)
 
-        for product_data in self._get_products():
+                try:
+                    product, _ = cast(Tuple[ThirdPartyProduct, bool], self.get_or_instantiate(
+                        model=self.product,
+                        ids= {
+                            "productnumber": f"{pd.get('article_number')}"
+                        },
+                        attrs = {
+                            "name": _build_name(pd, brand),
+                            "package": "kartonnen doos",
+                            "price": _get_price(pd),
+                            "description": wrap_style(_build_description(pd)),
+                            "category": [str(pd.get('product_type'))],
+                            "brand": normalize_string(brand),
 
-            name = f"{product_data['article_quality_number']} {product_data['collection']} {product_data['product_type']}" #type: ignore
-            product, _ = cast(Tuple[ThirdPartyProduct, bool], self.get_or_instantiate(
-                model=self.product,
-                ids= {
-                    "producnumber": product_data["article_number"] # type: ignore
-                },
-                attrs = {
-                    "name": name,
-                    "package": "kartonnen doos",
-                    "price": float(product_data.get('price', 0.0)),
-                    "description": wrap_style(product_data.get('usp_text', "")),
-                    "category": product_data.get("product_categories"),
-                    "brand": normalize_string(brand),
+                            "page_title": f"{name} ",
+                            "meta_description":  _build_meta_description(pd)
 
-                    "page_title": f"{brand} {name} "
-                },
-            ))
+                        },
+                    ))
+                except ValidationError as err:
+                    pretty_validation_error(err)
+                    raise err
 
-            append_if_not_exists(product_data.get("color"), product.colors)
-            append_if_not_exists(product_data.get("eu_size"), product.sizing)
-            append_if_not_exists((product_data.get("color"), product_data.get("product_image_1000px")), product.images)
+                append_if_not_exists(pd.get("color"), product.colors)
+                append_if_not_exists(pd.get("eu_size_part1"), product.sizing)
+                append_if_not_exists((pd.get("color"), pd.get("product_image_1000px")), product.images)
 
         return cast(List[ThirdPartyProduct], self.get_all(self.product))

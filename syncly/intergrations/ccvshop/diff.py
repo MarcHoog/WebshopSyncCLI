@@ -13,43 +13,48 @@ class AttributeOrderingDiff(Diff):
 
     @staticmethod
     def _order_sizing_attributes(children: list) -> list:
-        """ Reorder `children` based on their 'value' key, which represents sizes.
-        The order is determined by a custom parsing function that handles
-        numeric ranges, fractions, and predefined size labels"""
+        """Reorder `children` based on their 'value' key, which represents sizes."""
+
         def parse_size(size: str):
-            """ Parse a size string and return a tuple that can be used for sorting.
-            The tuple consists of:
-            - An integer indicating the type of size (0 for numeric, 1 for alpha)
-            - An integer for numeric sizes or a predefined order for alpha sizes
-            - The original size string for alpha sizes.
-            """
             size = size.strip().upper()
 
-            if "-" in size and not size.startswith("X"):
-                parts = size.split("-")
-                try:
-                    return (0, int(parts[0]), int(parts[1]))
-                except ValueError:
-                    pass
-
-            if "/" in size:
-                num, frac = size.split("/")
-                try:
-                    return (0, int(num), int(frac))
-                except ValueError:
-                    pass
-
+            # --- Pure numeric, incl. leading zeros ---
             if size.isdigit():
                 return (0, int(size))
 
+            # --- Numeric range (35-38, 37/38, etc.) ---
+            if "-" in size or "/" in size:
+                sep = "-" if "-" in size else "/"
+                parts = size.split(sep)
+                try:
+                    nums = [int(p) for p in parts]
+                    return (0, nums[0], nums[1] if len(nums) > 1 else 0)
+                except ValueError:
+                    pass
+
+            # --- Waist prefixed (W29, W30, etc.) ---
+            if size.startswith("W") and size[1:].isdigit():
+                return (1, int(size[1:]))
+
+            # --- C-sizes (C34, C36, etc.) ---
+            if size.startswith("C") and size[1:].isdigit():
+                return (2, int(size[1:]))
+
+            # --- Alpha sizes ---
             alpha_order = {
-                "XS": 100, "XS-S": 101, "S": 102, "M": 103, "M-L": 104,
-                "L": 105, "XL": 106, "XL-XXL": 107, "XXL": 108,
-                "3XL": 109, "3XL-4XL": 110, "4XL": 111,
-                "5XL": 112, "6XL": 113, "7XL": 114, "8XL": 115,
-                "OneSize": 200,
+                "2XS": 90, "XS": 100, "XS/S": 101, "S": 102, "S-M": 103,
+                "M": 104, "M/L": 105, "L": 106, "L-XL": 107,
+                "XL": 108, "X/2XL": 109, "2XL": 110, "2XL-3XL": 111,
+                "3XL": 112, "3/4XL": 113, "3XL-4XL": 114,
+                "4XL": 115, "4XL-5XL": 116,
+                "5XL": 117, "6XL": 118, "7XL": 119, "8XL": 120,
+                "ONE": 200, "ONESIZE": 200,
             }
-            return (1, alpha_order.get(size, 999), size)
+            if size in alpha_order:
+                return (3, alpha_order[size])
+
+            # --- Catch all: push oddballs (5PC, STK, PAI, X7, X8, X9, etc.) to the back ---
+            return (9, 999, size)
 
         return sorted(children, key=lambda child: parse_size(child.keys.get("value")))
 

@@ -59,7 +59,7 @@ class PerfionAdapter(ThirdPartyAdapter):
             return f"{string}..."
 
 
-        brand = self.settings.perfion.brand
+        brand = self.settings.ccv_shop.brand
 
         for product_data in self._get_products():
 
@@ -72,7 +72,7 @@ class PerfionAdapter(ThirdPartyAdapter):
                     "package": "kartonnen doos",
                     "price": product_data.get('ERPGrossPrice1', 0.0),
                     "description": wrap_style(product_data.get('Description')),
-                    "category": product_data['Category'],
+                    "category": [product_data['Category']],
                     "brand": normalize_string(brand),
 
                     "page_title": f"{brand} {product_data.get('ItemName', '')} ({product_data.get('ItemNumber', '')})",

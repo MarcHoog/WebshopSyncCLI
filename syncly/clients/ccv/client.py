@@ -95,11 +95,17 @@ class CCVClient():
 
         if not resp.ok:
             logger.warning(f"Non-2xx response: {resp.status_code} - {resp.text}")
-            if resp.status_code == 429:  # Rate-limiting response
+            if resp.status_code == 429 or resp.status_code == 54:  # Rate-limiting response
                 attempt += 1
+                multiplier = 1
                 if attempt <= max_attempt:  # Retry up to 3 times
-                    logger.info(f"Rate limit hit. Retrying attempt {attempt} after a delay {wait_before_retry} seconds...")
-                    time.sleep(wait_before_retry)
+                    if resp.status_code == 429:
+                        logger.info(f"Rate limit hit. Retrying attempt {attempt} after a delay {wait_before_retry} seconds...")
+                    elif resp.status_code == 54:
+                        multiplier = 2
+                        logger.info(f"Connection reset by peer. Retrying attempt {attempt} after a delay {wait_before_retry} seconds...")
+
+                    time.sleep(wait_before_retry * multiplier)
                     return self._do(
                         method,
                         uri,
@@ -108,7 +114,6 @@ class CCVClient():
                         raw,
                         attempt
                     )
-
             try:
                 resp.raise_for_status()
             except requests.HTTPError as e:

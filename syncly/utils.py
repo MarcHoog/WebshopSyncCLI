@@ -8,6 +8,7 @@ import logging
 from io import BytesIO, StringIO
 from PIL import Image, ImageOps
 from typing import List, Any, Optional, Callable
+from pydantic import ValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -81,7 +82,8 @@ def xlsx_bytes_to_list(data: bytes, sheet: str | int = 0, include_header: bool =
     Returns:
         A list of lists where each inner list is a row.
     """
-    df = pd.read_excel(BytesIO(data), sheet_name=sheet)
+    df = pd.read_excel(BytesIO(data), sheet_name=sheet, keep_default_na=False, na_values=[])
+    df = df.replace({"None": None})
 
     if include_header:
         return [df.columns.tolist()] + df.values.tolist()
@@ -97,7 +99,8 @@ def csv_bytes_to_list(data: bytes, include_header: bool = True, encoding: str = 
     Returns:
         A list of lists where each inner list is a row.
     """
-    df = pd.read_csv(StringIO(data.decode(encoding)), sep=seperator)
+    df = pd.read_csv(StringIO(data.decode(encoding)), sep=seperator, keep_default_na=False, na_values=[])
+    df = df.replace({"None": None})
 
     if include_header:
         return [df.columns.tolist()] + df.values.tolist()
@@ -153,3 +156,23 @@ def get_env(
             logger.error("Something went wrong casting value returning default")
             return default
     return default
+
+
+def to_float(value: str) -> float:
+    """
+    Convert a string with either comma or dot as decimal separator to float.
+    """
+    if not value:
+        raise ValueError("Empty string cannot be converted to float")
+
+    # Remove thousand separators and normalize decimal separator
+    value = value.replace(".", "").replace(",", ".")
+    return float(value)
+
+def pretty_validation_error(err: ValidationError) -> None:
+    logger.error("Validation failed with the following errors:")
+    for e in err.errors():
+        loc = " → ".join(str(x) for x in e["loc"])
+        msg = e["msg"]
+        typ = e["type"]
+        logger.error(f"  - Field: {loc}\n    Error: {msg}\n    Type: {typ}\n")

@@ -1,14 +1,144 @@
 settings:
   ccv_shop:
     root_category: INTERNAL_SYNC_MASCOT
-    base_url: "https://www.vanorsouw.biz"
+    url: "https://www.vanorsouw.biz"
     color_category: "mascot-kleuren"
-    sizing_category: "maten"
+    sizing_category: "mascot-sizing"
     image_width: 550
     image_height: 550
-  mascot:
-    brand: "Mascot"
     aditional_categories:
       - "Mascotwebshop.nl"
-    productdata: MASCOT_extended_productdata_NL.xlsx
-    availability: MASCOT_MATERIAL_AVAILABILITY.CSV
+    brand: "Mascot"
+  mascot:
+    product_data: "./MASCOT_extended_productdata_NL.xlsx"
+    availability: "./MASCOT_MATERIAL_AVAILABILITY.CSV"
+  mapping:
+    category:
+      Amerikaanse overall: Overalls
+      Amerikaanse overall met kniezakken: Overalls
+      Amerikaanse overall voor kinderen: Overalls
+      Amerikaanse regenoverall: Overalls
+      Amerikaanse winteroverall: Overalls
+      Bezoekersjas: Jacks
+      Bivakmuts:
+      Bodybroek:
+      Bodybroek met kniezakken: Werkbroeken
+      Bodywarmer: Jacks
+      Bodywarmer met rits: Jacks
+      Boxershorts:
+      Broek: Werkbroeken
+      Broek met dijbeenzak: Werkbroeken
+      Broek met dijbeenzakken: Werkbroeken
+      Broek met kniezakken: Werkbroeken
+      Broek met kniezakken, schilder: Werkbroeken
+      Broek met spijkerzakken: Werkbroeken
+      Broeken voor kinderen: Werkbroeken
+      Capuchon: Sweaters
+      Capuchontrui: Sweaters
+      Capuchontrui met rits: Sweaters
+      Capuchontrui met winddicht membraan: Sweaters
+      Driekwart broek met kniezakken:
+      Driekwart broek met spijkerzakken:
+      Flat cap:
+      Flat cap met haarnetje:
+      Fleece capuchontrui:
+      Fleece capuchontrui met rits:
+      Fleece jas:
+      Fleecetrui met capuchon:
+      Fleecetrui met korte rits:
+      Fleecetrui met korte rits en voering:
+      Fleecetrui met rits:
+      Fleecetrui met rits en voering:
+      Fleecetrui voor kinderen:
+      Functioneel hemd:
+      Functioneel hemd, met korte mouwen:
+      Functionele broek:
+      Functionele onderbroek:
+      Gebreid jas met rits:
+      Gebreide muts:
+      Gebreide muts voor kinderen:
+      Gebreide trui:
+      Gebreide trui met korte rits:
+      Gebreide trui met rits:
+      Gereedschapsvest:
+      Hamerhouder:
+      Impregneerspray:
+      Inlegzolen:
+      Jas:
+      Jas met capuchon:
+      Jas met rits:
+      Jeans:
+      Kniebeschermers:
+      MASCOT WORKWEAR Tas:
+      Microfleece trui met korte rits:
+      Microfleece trui met rits:
+      Muts:
+      Nekwarmer:
+      Overall met kniezakken:
+      Overbroeken voor kinderen:
+      Overhemd:
+      Overhemd met teddy voering:
+      Overhemd, met korte mouwen:
+      Overtrekbroek:
+      Overtrektuinbroek:
+      PU-werklaarzen:
+      Parka:
+      Pashouder:
+      Pet:
+      Pet met haarnetje:
+      Pilotenjas:
+      Poloshirt: Poloshirts
+      Poloshirt met borstzak: Poloshirts
+      Poloshirt, met lange mouwen: Poloshirts
+      Polosweatshirt: Poloshirts
+      Regenbroek: Werkbroeken
+      Regenjas: Jacks
+      Riem: Accessoires
+      Riemlussen: Accessoires
+      Rok:
+      Shell jas:
+      Shelljas voor kinderen:
+      Shorts:
+      Shorts met spijkerzakken:
+      Shorts, lange:
+      Shorts, lange met spijkerzakken:
+      Skipakken voor kinderen:
+      Sneakers:
+      Softshell bodywarmer: Jacks
+      Softshell jas: Jacks
+      Softshell jas met capuchon: Jacks
+      Softshell jas voor kinderen: Jacks
+      Sokken:
+      Spijkerzak:
+      Spijkerzak, bouw:
+      Spijkerzak, elektricien:
+      Spijkerzakken:
+      Spijkerzakken, bouw:
+      Spijkerzakken, elektricien:
+      Spijkerzakken, schilder:
+      Stofjas: Jacks
+      Sweatshirt:
+      Sweatshirt met korte rits:
+      Sweatshirt met rits:
+      T-shirt: Shirts
+      T-shirt, lange mouwen, met korte rits: Shirts
+      T-shirt, met korte mouwen: Shirts
+      T-shirt, met lange mouwen: Shirts
+      T-shirts voor kinderen: Shirts
+      Telefoonzak:
+      Thermobodywarmer:
+      Thermobroek:
+      Thermojas:
+      Thermojas voor kinderen:
+      Tuniek:
+      Veiligheidshesje: Signaalkleding
+      Veiligheidssandalen: Signaalkleding
+      Veiligheidsschoenen hoog:
+      Veiligheidsschoenen hoog S1PS, asfalt:
+      Veiligheidsschoenen laag:
+      Veters:
+      Winterbroek: Werkbroeken
+      Winterjas: Jacks
+      Winterjas voor kinderen: Jacks
+      Winteroverall: Overalls
+      Wintervest: Jacks

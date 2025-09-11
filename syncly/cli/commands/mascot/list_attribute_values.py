@@ -46,7 +46,7 @@ def handle(args, console: Console):
         args: Parsed CLI arguments.
         console: Rich console for output.
     """
-    attribute = args.attribute_name
+    attribute = args.attribute
 
     if args.env_file:
         load_env_files(args.env_file)

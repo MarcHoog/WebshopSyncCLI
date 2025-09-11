@@ -36,7 +36,8 @@ class ThirdPartyAdapter(Adapter):
 
     def __init__(self, *args,
         settings:Optional[SynclySettings] = None,
-        client: Optional[Any] = None
+        client: Optional[Any] = None,
+        **kwargs
     ):
 
         self.settings = settings or SynclySettings()
@@ -46,6 +47,8 @@ class ThirdPartyAdapter(Adapter):
         self.sizing_mapping = self.settings.mapping.size
         self.color_mapping = self.settings.mapping.color
         self.category_mapping = self.settings.mapping.category
+
+        super().__init__(*args, **kwargs)
 
     @abstractmethod
     def _get_products(self) -> Union[List[Type[Dict]], Generator[Type[Dict], Any, Any]]:
@@ -79,10 +82,11 @@ class ThirdPartyAdapter(Adapter):
             raise ValueError("Expected a root category to exists to attach devices to")
 
         categories = [self.settings.ccv_shop.root_category]
-        if mapped := self.category_mapping.get(product.category):
-            categories.append(mapped)
-        else:
-            logger.warning(f"Matching product category not found for: {product.category}")
+        for cat in product.category:
+            if mapped := self.category_mapping.get(cat):
+                categories.append(mapped)
+            else:
+                logger.warning(f"Matching product category not found for: {product.category}")
         categories.extend(self.settings.ccv_shop.aditional_categories)
         for category in categories:
             cat_obj, _ = self.get_or_instantiate(
@@ -104,8 +108,7 @@ class ThirdPartyAdapter(Adapter):
 
         for color, url in product.images:
             if not self.color_mapping.get(color):
-                logger.warning(f"Color {color} cannot be mapped, skipping this Image")
-                continue
+                logger.warning(f"Color {color} cannot be mapped, This image might be for a product that cannot be orderd")
             try:
                 b64_img = base64_image_from_url(url, (image_width, image_height))
             except RequestException:

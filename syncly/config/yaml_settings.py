@@ -9,23 +9,22 @@ class CCVShopSettings(BaseModel):
     sizing_category: str = ""
     image_width: int = 550
     image_height: int = 550
+    brand: str = ""
     aditional_categories: List[str] = []
 
 class Mapping(BaseModel):
-    color: Dict[str, str] = {}
-    category: Dict[str, str] = {}
-    size: Dict[str, str] = {}
+    color: Dict[str, Optional[str]] = {}
+    category: Dict[str, Optional[str]] = {}
+    size: Dict[str, Optional[str]] = {}
 
 class PerfionSettings(BaseModel):
     url: str = ""
-    brand: str = ""
     included_categories: List[str] = []
     excluded_products: List[str] = []
 
 class MascotSettings(BaseModel):
     availability: str = ""
     product_data: str = ""
-    brand: str = ""
 
 class SynclySettings(BaseModel):
     _instance: Optional["SynclySettings"] = None

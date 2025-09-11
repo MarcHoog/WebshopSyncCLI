@@ -2,10 +2,11 @@ import argparse
 from rich.console import Console
 from syncly.cli.commands import version, perfion, ccv, mascot
 from syncly.cli.logging import setup_global_logging
+from logging import DEBUG
 console = Console()
 
 def main():
-    setup_global_logging()
+    setup_global_logging(DEBUG)
 
     parser = argparse.ArgumentParser(
         description="Multi-file argparse CLI example with rich output"
@@ -32,6 +33,7 @@ def main():
     perfion.list_attribute_values.add_arguments(values_parser)
     values_parser.set_defaults(func=perfion.list_attribute_values.handle)
 
+    # Mascot Client Commands
     mascot_parser = subparsers.add_parser("mascot", help="Mascot client Commands")
     mascot_subparsers = mascot_parser.add_subparsers(dest="mascot_cmd", required=True)
     mascot_value_parser = mascot_subparsers.add_parser(
@@ -40,10 +42,10 @@ def main():
     )
 
     mascot.list_attribute_values.add_arguments(mascot_value_parser)
-    mascot_value_parser.set_defaults(func=mascot.list_attribute_values)
+    mascot_value_parser.set_defaults(func=mascot.list_attribute_values.handle)
 
 
-    # CCV commands
+    # CCV Client commands
     ccv_parser = subparsers.add_parser("ccv", help="CCV client commands")
     ccv_subparsers = ccv_parser.add_subparsers(dest="ccv_cmd", required=True)
     create_attr_parser = ccv_subparsers.add_parser(
@@ -56,6 +58,10 @@ def main():
     sync_perfion_parser = ccv_subparsers.add_parser("sync-perfion", help="Syncs between two Sources")
     ccv.sync_perfion.add_arguments(sync_perfion_parser)
     sync_perfion_parser.set_defaults(func=ccv.sync_perfion.handle)
+
+    sync_mascot_parser = ccv_subparsers.add_parser("sync-mascot", help="Syncs between two Sources")
+    ccv.sync_mascot.add_arguments(sync_mascot_parser)
+    sync_mascot_parser.set_defaults(func=ccv.sync_mascot.handle)
 
     args = parser.parse_args()
     args.func(args, console)

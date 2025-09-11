@@ -129,7 +129,10 @@ class CCVProduct(Product):
         if not self.id:
             raise ValueError("Expected exesting object to have an ID")
 
-        adapter.conn.product.delete_product(f"{self.id}")
+        try:
+            adapter.conn.product.delete_product(f"{self.id}")
+        except Exception as e:
+            raise ObjectNotDeleted(e)
         return super().delete()
 
 
@@ -169,9 +172,12 @@ class CCVCategoryToDevice(CategoryToDevice):
         """Delete implementation of CCV Category"""
         adapter = cast("CCVShopAdapter", self.adapter)
         if not self.id:
-            raise ValueError("Expected exesting object to have an ID")
+            raise ObjectNotDeleted("Expected exesting object to have an ID")
+        try:
+            adapter.conn.product_to_category.delete_product_to_category(f"{self.id}")
+        except Exception as e:
+            raise ObjectNotDeleted(e)
 
-        adapter.conn.product_to_category.delete_product_to_category(f"{self.id}")
         return super().delete()
 
 class CCVAttributeValueToProduct(AttributeValueToProduct):
@@ -210,7 +216,12 @@ class CCVAttributeValueToProduct(AttributeValueToProduct):
         if not self.id:
             raise ObjectNotDeleted("Expected exesting object to have an ID")
 
-        adapter.conn.product_to_attribute.delete_product_attribute_value(f"{self.id}")
+        try:
+            adapter.conn.product_to_attribute.delete_product_attribute_value(f"{self.id}")
+        except Exception as e:
+            raise ObjectNotDeleted(e)
+
+
         return super().delete()
 
 
@@ -271,7 +282,11 @@ class CCVProductPhoto(ProductPhoto):
         """Delete implementation of CCV Attribute Value to Product"""
         adapter = cast("CCVShopAdapter", self.adapter)
         if not self.id:
-            raise ValueError("Expected exesting object to have an ID")
+            raise ObjectNotDeleted("Expected exesting object to have an ID")
 
-        adapter.conn.photos.delete_photo(f"{self.id}")
+        try:
+            adapter.conn.photos.delete_photo(f"{self.id}")
+        except Exception as e:
+            raise ObjectNotDeleted(e)
+
         return super().delete()

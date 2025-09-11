@@ -8,9 +8,9 @@ settings:
     image_height: 550
     aditional_categories:
       - "Tricorpwebshop.nl"
+    brand: "Tricorp"
   perfion:
     url: "https://perfion.tricorp.com:85/Perfion/GetData.asmx"
-    brand: "Tricorp"
   mapping:
     color:
       Antramel: grijs-melange

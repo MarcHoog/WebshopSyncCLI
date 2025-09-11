@@ -3,7 +3,7 @@ from syncly.intergrations.ccvshop.models.base import Product
 
 class ThirdPartyProduct(Product):
 
-    category: str
+    category: List[str] = []
     colors: List[str] = []
     sizing: List[str] = []
     images: List[Tuple[str, str]] = []

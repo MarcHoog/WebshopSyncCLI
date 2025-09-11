@@ -1,4 +1,5 @@
 import pytest
+from pydantic import ValidationError
 from syncly.intergrations.ccvshop.adapters.adapter_mascot import MascotAdapter
 from syncly.clients.mascot.client import InMemoryFTPClient
 from syncly.config import SynclySettings
@@ -30,5 +31,11 @@ def test_mascot_adapter_get_products(mascot_adapter):
 @pytest.mark.integration
 def test_mascot_load_products(mascot_adapter):
     mascot_adapter.load_products()
+
     products = mascot_adapter.get_all(mascot_adapter.product)
+
+    for product in products:
+        splitted_name = product.name.split(' ')
+        assert "nan" not in splitted_name
+
     assert products, "No Products loaded in"

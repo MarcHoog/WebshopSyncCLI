@@ -10,7 +10,7 @@ def helper_list_attribute_values(console: Console, data: List[Dict], attribute: 
     values = []
     missing_count = 0
     for i in data:
-        val = i.get(attribute)
+        val = str(i.get(attribute))
         if val is None:
             missing_count += 1
         else:
