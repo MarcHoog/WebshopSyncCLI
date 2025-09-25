@@ -4,7 +4,7 @@ import os
 from typing import Optional
 from diffsync import Adapter
 from syncly.intergrations.ccvshop.models.base import Product, CategoryToDevice, AttributeValueToProduct, ProductPhoto
-from syncly.utils import normalize_string, base64_endcode_image
+from syncly.helpers import normalize_string, base64_endcode_image
 
 logger = logging.getLogger(__name__)
 

@@ -17,7 +17,7 @@ from syncly.intergrations.ccvshop.diff import AttributeOrderingDiff
 from syncly.config import SynclySettings
 from syncly.intergrations.ccvshop.adapters.adapter_perfion import PerfionAdapter
 from syncly.webhook import send_discord_webhook
-from syncly.utils import get_env, load_env_files
+from syncly.helpers import get_env, load_env_files
 
 def _fatal(err_msg):
     logging.error(err_msg)

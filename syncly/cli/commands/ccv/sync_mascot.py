@@ -5,39 +5,24 @@ Provides argument parsing, integration setup, and pretty printing of diffs and s
 """
 
 import logging
-import sys
 from rich.text import Text
 
 from diffsync.logging import enable_console_logging
 from diffsync.enum import DiffSyncFlags
 from syncly.intergrations.ccvshop.adapters.adapter_ccv import CCVShopAdapter
 from syncly.clients.ccv.client import CCVClient
-from syncly.clients.mascot.client import InMemoryFTPClient
+from syncly.clients.ftp.client import InMemoryFTPClient
 from syncly.intergrations.ccvshop.adapters.adapter_mascot import MascotAdapter
 from syncly.config import SynclySettings
-from syncly.webhook import send_discord_webhook
-from syncly.utils import get_env, load_env_files
+from syncly.helpers import get_env, load_env_files
 from syncly.intergrations.ccvshop.diff import AttributeOrderingDiff
-
-def _fatal(err_msg):
-    logging.error(err_msg)
-    if webhook := get_env("SYNCLY_WEBHOOK"):
-           send_discord_webhook(
-            webhook_url=webhook,
-            status="error",
-            title="Fatal Error",
-            message=err_msg
-           )
-
-    sys.exit(1)
 
 def _create_adapter(settings: SynclySettings, Adapter, client):
     logging.info(f"Setting up {Adapter} adapter...")
     try:
         adapter = Adapter(settings=settings, client=client)
     except ValueError as e:
-        err_msg = f"Something went wrong setting creating an adapter {Adapter}: {e}"
-        _fatal(err_msg)
+        raise e
 
     return adapter # type: ignore
 
@@ -46,8 +31,8 @@ def _load(adapter):
     try:
         adapter.load()
     except Exception as e:
-        err_msg  = f"Something went wrong loading in data into {adapter}: {e}"
-        _fatal(err_msg)
+        raise e
+
     return adapter
 
 

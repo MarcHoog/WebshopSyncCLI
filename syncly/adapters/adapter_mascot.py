@@ -1,8 +1,9 @@
 import logging
 
 from pydantic import ValidationError
+from syncly.config.yaml_settings import SynclySettings
 from syncly.intergrations.ccvshop.models.third_party import ThirdPartyProduct
-from syncly.utils import (
+from syncly.helpers import (
     wrap_style,
     xlsx_bytes_to_list,
     csv_bytes_to_list,
@@ -144,7 +145,9 @@ def _build_description(pd: ProductRow) -> str:
     return f"""
         {technical_text}
         <br>
-
+        <br>
+        <br>
+        <br>
         {formated_usp_text}
     """
 
@@ -193,10 +196,22 @@ def _create_availablity_mapping(csv_bytes) -> Any:
 
     return availability_data
 
+
+def _is_excluded(pd: ProductRow, settings: SynclySettings) -> bool:
+    excluded = [normalize_string(set) for set in settings.mascot.excluded_product_types]
+    if normalize_string(str(pd.get('product_type'))) in excluded:
+        return True
+
+    return False
+
+
+
 class MascotAdapter(ThirdPartyAdapter):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.image_mode = 'contain'
 
     def __str__(self):
         return "MascotAdapter"
@@ -243,7 +258,7 @@ class MascotAdapter(ThirdPartyAdapter):
         brand = self.settings.ccv_shop.brand
 
         for pd in self._get_products():
-            if _is_stocked(pd):
+            if _is_stocked(pd) and not _is_excluded(pd, self.settings):
                 name = _build_name(pd, brand)
 
                 try:

@@ -5,7 +5,7 @@ from collections import defaultdict
 from diffsync.diff import Diff
 from syncly.config import SynclySettings
 
-from syncly.utils import normalize_string
+from syncly.helpers import normalize_string
 
 logger = logging.getLogger(__name__)
 

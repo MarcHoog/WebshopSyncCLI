@@ -3,7 +3,7 @@ import logging
 from typing import cast, Tuple, List
 from requests.exceptions import RequestException
 from syncly.intergrations.ccvshop.models.third_party import ThirdPartyProduct
-from syncly.utils import normalize_string, append_if_not_exists, wrap_style
+from syncly.helpers import normalize_string, append_if_not_exists, wrap_style
 from syncly.intergrations.ccvshop.adapters.adapter_third_party import ThirdPartyAdapter
 
 logger = logging.getLogger(__name__)

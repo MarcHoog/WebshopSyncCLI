@@ -14,7 +14,7 @@ from PIL import Image
 ])
 
 def test_normalize_env_var(input_str, expected):
-    from syncly.utils import normalize_env_var
+    from syncly.helpers import normalize_env_var
     assert normalize_env_var(input_str) == expected
 
 
@@ -33,14 +33,14 @@ class DummyResponse:
         pass
 
 def test_base64_image_from_url(monkeypatch):
-    from syncly.utils import base64_image_from_url
+    from syncly.helpers import base64_image_from_url
 
     test_img_bytes = create_test_image_bytes()
 
     def mock_get(url):
         return DummyResponse(test_img_bytes)
 
-    monkeypatch.setattr("syncly.utils.requests.get", mock_get)
+    monkeypatch.setattr("syncly.helpers.requests.get", mock_get)
 
     b64_str = base64_image_from_url("http://example.com/image.png", target_resolution=(550, 550))
 
@@ -51,7 +51,7 @@ def test_base64_image_from_url(monkeypatch):
 
 
 def test_base64_image_from_url_integration():
-    from syncly.utils import base64_image_from_url
+    from syncly.helpers import base64_image_from_url
 
     url = "https://artikelinfo.tricorp.com/productimages/UnicontaTemp/101001antramelside.png"
     b64_str = base64_image_from_url(url, target_resolution=(550, 550))

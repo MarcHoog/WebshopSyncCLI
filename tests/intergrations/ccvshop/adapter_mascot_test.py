@@ -3,7 +3,7 @@ from pydantic import ValidationError
 from syncly.intergrations.ccvshop.adapters.adapter_mascot import MascotAdapter
 from syncly.clients.mascot.client import InMemoryFTPClient
 from syncly.config import SynclySettings
-from syncly.utils import get_env, load_env_files
+from syncly.helpers import get_env, load_env_files
 
 @pytest.fixture
 def mascot_adapter() -> MascotAdapter:

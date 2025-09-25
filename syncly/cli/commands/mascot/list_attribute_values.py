@@ -2,10 +2,10 @@
 from rich.console import Console
 from typing import List, Dict, cast
 from syncly.config import SynclySettings
-from syncly.clients.mascot.client import InMemoryFTPClient
+from syncly.clients.ftp.client import FTP
 from syncly.intergrations.ccvshop.adapters.adapter_mascot import MascotAdapter
 from syncly.cli.helpers import helper_list_attribute_values
-from syncly.utils import get_env, load_env_files
+from syncly.helpers import get_env, load_env_files
 
 def add_arguments(parser):
     """

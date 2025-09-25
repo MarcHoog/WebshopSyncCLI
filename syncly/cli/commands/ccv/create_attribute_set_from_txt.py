@@ -2,7 +2,7 @@ import os
 from rich.console import Console
 from syncly.clients.ccv.client import CCVClient
 from syncly.config.yaml_settings import SynclySettings
-from syncly.utils import get_env, load_env_files
+from syncly.helpers import get_env, load_env_files
 
 
 def add_arguments(parser):

@@ -2,7 +2,7 @@ import logging
 from time import sleep
 from typing import cast, Tuple, Dict
 from diffsync import Adapter
-from syncly.utils import base64_image_from_url
+from syncly.helpers import base64_image_from_url
 from syncly.config import SynclySettings
 from syncly.clients.ccv.client import CCVClient
 from syncly.intergrations.ccvshop.models.ccv_shop import (
@@ -16,7 +16,7 @@ from syncly.intergrations.ccvshop.models.ccv_shop import (
     CCVProductPhoto,
     CCVBrand,
 )
-from syncly.utils import normalize_string
+from syncly.helpers import normalize_string
 from diffsync.enum import DiffSyncModelFlags
 
 logger = logging.getLogger(__name__)

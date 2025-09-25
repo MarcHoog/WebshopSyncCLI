@@ -3,9 +3,10 @@ from requests.exceptions import RequestException
 from diffsync import Adapter, DiffSyncModel
 from syncly.intergrations.ccvshop.models.third_party import ThirdPartyProduct
 from abc import abstractmethod
-from syncly.utils import (
+from syncly.helpers import (
     normalize_string,
-    base64_image_from_url
+    base64_image_from_url,
+    base64_image_from_url_contain
 )
 import threading
 from typing import Optional, List, Any, Union, Generator, Type, Dict
@@ -42,6 +43,7 @@ class ThirdPartyAdapter(Adapter):
 
         self.settings = settings or SynclySettings()
         self.conn = client
+        self.image_mode = 'crop'
 
         # Commen mappings
         self.sizing_mapping = self.settings.mapping.size
@@ -98,8 +100,8 @@ class ThirdPartyAdapter(Adapter):
             )
             self.add_child(product, cat_obj)
 
-
-    def process_images(self, product: ThirdPartyProduct):
+    # TODO make this a class for mode
+    def process_images(self, product: ThirdPartyProduct, mode: str = 'crop'):
         """
         Process and add images to the product.
         """
@@ -110,7 +112,14 @@ class ThirdPartyAdapter(Adapter):
             if not self.color_mapping.get(color):
                 logger.warning(f"Color {color} cannot be mapped, This image might be for a product that cannot be orderd")
             try:
-                b64_img = base64_image_from_url(url, (image_width, image_height))
+
+                if mode == 'crop':
+                    b64_img = base64_image_from_url(url, (image_width, image_height))
+                elif mode == 'contain':
+                    b64_img = base64_image_from_url_contain(url,(image_width, image_height))
+                else:
+                    raise ValueError("Unkown proccesing mode")
+
             except RequestException:
                 logger.error(f"Failed to fetch image from URL: {url}")
                 continue
@@ -139,7 +148,7 @@ class ThirdPartyAdapter(Adapter):
         self.process_categories(product)
         self.process_mapped_attributes(product, self.sizing_mapping, product.sizing, self.settings.ccv_shop.sizing_category)
         self.process_mapped_attributes(product, self.color_mapping, product.colors, self.settings.ccv_shop.color_category)
-        self.process_images(product)
+        self.process_images(product, self.image_mode)
 
     def add_child(self, parent: DiffSyncModel, child: DiffSyncModel):
         """
