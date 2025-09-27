@@ -1,20 +1,5 @@
-import logging
-
-from pydantic import ValidationError
-from syncly.config.yaml_settings import SynclySettings
-from syncly.intergrations.ccvshop.models.third_party import ThirdPartyProduct
-from syncly.helpers import (
-    wrap_style,
-    xlsx_bytes_to_list,
-    csv_bytes_to_list,
-    normalize_string,
-    append_if_not_exists,
-    to_float,
-    pretty_validation_error
-)
 from enum import Enum
-from typing import TypedDict, Optional, List, Any, Union, Generator, Tuple, cast
-from syncly.intergrations.ccvshop.adapters.adapter_third_party import ThirdPartyAdapter
+from typing import TypedDict, Optional, List
 
 
 class ProductRow(TypedDict, total=False):

@@ -3,9 +3,9 @@ from time import sleep
 from typing import cast, Tuple, Dict
 from diffsync import Adapter
 from syncly.helpers import base64_image_from_url
-from syncly.config import SynclySettings
+from syncly.settings import Settings
 from syncly.clients.ccv.client import CCVClient
-from syncly.intergrations.ccvshop.models.ccv_shop import (
+from syncly.models.ccv_shop import (
     CCVProduct,
     CCVCategory,
     CCVPackage,
@@ -45,7 +45,7 @@ class CCVShopAdapter(Adapter):
     def __str__(self):
         return "CCVShopAdapter"
 
-    def __init__(self, *args, settings: SynclySettings, client: CCVClient, **kwargs,):
+    def __init__(self, *args, settings: Settings, client: CCVClient, **kwargs,):
         super().__init__(*args, **kwargs)
 
         if not settings.ccv_shop.root_category:

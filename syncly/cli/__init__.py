@@ -1,6 +1,6 @@
 import argparse
 from rich.console import Console
-from syncly.cli.commands import version, perfion, ccv, mascot
+from syncly.cli.commands import version, ccv
 from syncly.cli.logging import setup_global_logging
 from logging import DEBUG
 console = Console()
@@ -21,28 +21,6 @@ def main():
 
     version_parser = subparsers.add_parser("version", help="Prints the version")
     version_parser.set_defaults(func=version.handle)
-
-
-    # Perfion client commands
-    perfion_parser = subparsers.add_parser("perfion", help="Perfion client commands")
-    perfion_subparsers = perfion_parser.add_subparsers(dest="perfion_cmd", required=True)
-    values_parser = perfion_subparsers.add_parser(
-        "list-values",
-        help="List all possible values for a given attribute across all products",
-    )
-    perfion.list_attribute_values.add_arguments(values_parser)
-    values_parser.set_defaults(func=perfion.list_attribute_values.handle)
-
-    # Mascot Client Commands
-    mascot_parser = subparsers.add_parser("mascot", help="Mascot client Commands")
-    mascot_subparsers = mascot_parser.add_subparsers(dest="mascot_cmd", required=True)
-    mascot_value_parser = mascot_subparsers.add_parser(
-        "list-values",
-        help="List all possible values for a given attribute across all products",
-    )
-
-    mascot.list_attribute_values.add_arguments(mascot_value_parser)
-    mascot_value_parser.set_defaults(func=mascot.list_attribute_values.handle)
 
 
     # CCV Client commands

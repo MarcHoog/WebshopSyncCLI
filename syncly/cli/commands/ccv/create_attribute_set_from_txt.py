@@ -1,7 +1,7 @@
 import os
 from rich.console import Console
 from syncly.clients.ccv.client import CCVClient
-from syncly.config.yaml_settings import SynclySettings
+from syncly.settings import Settings
 from syncly.helpers import get_env, load_env_files
 
 
@@ -73,7 +73,7 @@ def handle(args, console: Console):
     if args.env_file:
         load_env_files(args.env_file)
 
-    settings = SynclySettings.from_yaml(get_env("SYNCLY_SETTINGS", "settings.yaml"))
+    settings = Settings.from_yaml(get_env("SYNCLY_SETTINGS", "settings.yaml"))
     client = CCVClient(
         get_env("CCVSHOP_PUBLIC_KEY"),
         get_env("CCVSHOP_PRIVATE_KEY"),

@@ -2,7 +2,7 @@ import logging
 from ftplib import FTP, error_perm, all_errors
 from io import BytesIO
 
-from clients.errors import FtpError
+from syncly.clients.errors import FtpError
 
 
 logger = logging.getLogger(__name__)

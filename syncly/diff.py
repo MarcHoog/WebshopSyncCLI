@@ -3,8 +3,8 @@ import logging
 from typing import Dict, Any
 from collections import defaultdict
 from diffsync.diff import Diff
-from syncly.config import SynclySettings
 
+from syncly.settings import get_settings
 from syncly.helpers import normalize_string
 
 logger = logging.getLogger(__name__)
@@ -18,11 +18,9 @@ class AttributeOrderingDiff(Diff):
         def parse_size(size: str):
             size = size.strip().upper()
 
-            # --- Pure numeric, incl. leading zeros ---
             if size.isdigit():
                 return (0, int(size))
 
-            # --- Numeric range (35-38, 37/38, etc.) ---
             if "-" in size or "/" in size:
                 sep = "-" if "-" in size else "/"
                 parts = size.split(sep)
@@ -32,15 +30,12 @@ class AttributeOrderingDiff(Diff):
                 except ValueError:
                     pass
 
-            # --- Waist prefixed (W29, W30, etc.) ---
             if size.startswith("W") and size[1:].isdigit():
                 return (1, int(size[1:]))
 
-            # --- C-sizes (C34, C36, etc.) ---
             if size.startswith("C") and size[1:].isdigit():
                 return (2, int(size[1:]))
 
-            # --- Alpha sizes ---
             alpha_order = {
                 "2XS": 90, "XS": 100, "XS/S": 101, "S": 102, "S-M": 103,
                 "M": 104, "M/L": 105, "L": 106, "L-XL": 107,
@@ -53,7 +48,6 @@ class AttributeOrderingDiff(Diff):
             if size in alpha_order:
                 return (3, alpha_order[size])
 
-            # --- Catch all: push oddballs (5PC, STK, PAI, X7, X8, X9, etc.) to the back ---
             return (9, 999, size)
 
         return sorted(children, key=lambda child: parse_size(child.keys.get("value")))
@@ -94,7 +88,7 @@ class AttributeOrderingDiff(Diff):
         'lettermaatvoering' group according to our sizing mapping.
         """
 
-        settings = SynclySettings.get_instance()
+        settings = get_settings()
         color_mapping = settings.mapping.color
 
         attribute_groups: Dict[str, list] = defaultdict(list)
@@ -104,7 +98,7 @@ class AttributeOrderingDiff(Diff):
 
         # Order the 'kleuren' group
         letter_group = attribute_groups.get(settings.ccv_shop.color_category, [])
-        reference = [normalize_string(x) for x in color_mapping.values()]
+        reference = [normalize_string(x) for x in color_mapping.values()] # type: ignore
         attribute_groups[settings.ccv_shop.color_category] = cls._order_attributes(
             reference,
             letter_group

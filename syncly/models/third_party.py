@@ -1,5 +1,5 @@
 from typing import List, Tuple
-from syncly.intergrations.ccvshop.models.base import Product
+from syncly.models.base import Product
 
 class ThirdPartyProduct(Product):
 

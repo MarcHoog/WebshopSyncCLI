@@ -5,6 +5,7 @@ import yaml
 
 StrDict = Dict[str, Optional[str]]
 
+
 class CcvShop(BaseModel):
     root_category: str = ""
     url: str = ""
@@ -52,3 +53,17 @@ class Settings(BaseModel):
             raise RuntimeError(f"YAML file not found: {path}")
         except Exception as e:
             raise RuntimeError(f"Failed to load settings: {e}")
+
+_settings_instance: Optional[Settings] = None
+
+def load_settings(path: str) -> Settings:
+    global _settings_instance
+    with open(path, "r") as f:
+        data = yaml.safe_load(f)
+    _settings_instance = Settings(**data.get("settings", {}))
+    return _settings_instance
+
+def get_settings() -> Settings:
+    if _settings_instance is None:
+        raise RuntimeError("Settings not initialized. Call load_settings() first.")
+    return _settings_instance

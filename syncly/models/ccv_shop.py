@@ -1,6 +1,10 @@
+import json
+import logging
+
 from typing import TYPE_CHECKING, cast, Optional
 from diffsync.exceptions import ObjectNotCreated, ObjectNotFound, ObjectNotDeleted, ObjectNotUpdated
-from syncly.intergrations.ccvshop.models.base import (
+
+from syncly.models.base import (
     Category,
     Product,
     Package,
@@ -13,13 +17,10 @@ from syncly.intergrations.ccvshop.models.base import (
 
 )
 
-import json
-import logging
-
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
-    from syncly.intergrations.ccvshop.adapters.adapter_ccv import CCVShopAdapter
+    from syncly.adapters.ccv import CCVShopAdapter
 
 class CCVPackage(Package):
     """ CCV Shop implementation of the Category model"""

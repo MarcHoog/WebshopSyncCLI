@@ -1,25 +1,27 @@
 import logging
-from requests.exceptions import RequestException
-from diffsync import Adapter, DiffSyncModel
-from syncly.intergrations.ccvshop.models.third_party import ThirdPartyProduct
+import threading
+
 from abc import abstractmethod
+from concurrent.futures import ThreadPoolExecutor
+from diffsync import Adapter, DiffSyncModel
+from requests.exceptions import RequestException
+from syncly.models.third_party import ThirdPartyProduct
+from typing import Optional, List, Any, Union, Generator, Type, Dict
+
+from syncly.settings import Settings
+from syncly.models.base import (
+    CategoryToDevice,
+    AttributeValueToProduct,
+    ProductPhoto,
+)
 from syncly.helpers import (
     normalize_string,
     base64_image_from_url,
     base64_image_from_url_contain
 )
-import threading
-from typing import Optional, List, Any, Union, Generator, Type, Dict
-from concurrent.futures import ThreadPoolExecutor
-from syncly.intergrations.ccvshop.models.base import (
-    CategoryToDevice,
-    AttributeValueToProduct,
-    ProductPhoto,
-)
 
 logger = logging.getLogger(__name__)
 
-from syncly.config import SynclySettings
 
 class ThirdPartyAdapter(Adapter):
 
@@ -36,12 +38,12 @@ class ThirdPartyAdapter(Adapter):
         return "ThirdPartyAdapter"
 
     def __init__(self, *args,
-        settings:Optional[SynclySettings] = None,
+        settings:Optional[Settings] = None,
         client: Optional[Any] = None,
         **kwargs
     ):
 
-        self.settings = settings or SynclySettings()
+        self.settings = settings or Settings()
         self.conn = client
         self.image_mode = 'crop'
 
@@ -89,7 +91,7 @@ class ThirdPartyAdapter(Adapter):
                 categories.append(mapped)
             else:
                 logger.warning(f"Matching product category not found for: {product.category}")
-        categories.extend(self.settings.ccv_shop.aditional_categories)
+        categories.extend(self.settings.ccv_shop.additional_categories)
         for category in categories:
             cat_obj, _ = self.get_or_instantiate(
                 self.category_to_device,

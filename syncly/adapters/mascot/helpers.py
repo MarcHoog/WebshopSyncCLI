@@ -1,20 +1,14 @@
 import logging
 
-from pydantic import ValidationError
-from syncly.config.yaml_settings import SynclySettings
-from syncly.intergrations.ccvshop.models.third_party import ThirdPartyProduct
+from .models import ProductRow, StockFlag
+
+from syncly.settings import Settings
 from syncly.helpers import (
-    wrap_style,
-    xlsx_bytes_to_list,
     csv_bytes_to_list,
     normalize_string,
-    append_if_not_exists,
     to_float,
-    pretty_validation_error
 )
-from enum import Enum
-from typing import TypedDict, Optional, List, Any, Union, Generator, Tuple, cast
-from syncly.intergrations.ccvshop.adapters.adapter_third_party import ThirdPartyAdapter
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -90,7 +84,7 @@ def _create_availablity_mapping(csv_bytes) -> Any:
     return availability_data
 
 
-def _is_excluded(pd: ProductRow, settings: SynclySettings) -> bool:
+def _is_excluded(pd: ProductRow, settings: Settings) -> bool:
     excluded = [normalize_string(set) for set in settings.mascot.excluded_product_types]
     if normalize_string(str(pd.get('product_type'))) in excluded:
         return True

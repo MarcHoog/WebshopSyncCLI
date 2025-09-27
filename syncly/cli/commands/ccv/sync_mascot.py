@@ -9,15 +9,15 @@ from rich.text import Text
 
 from diffsync.logging import enable_console_logging
 from diffsync.enum import DiffSyncFlags
-from syncly.intergrations.ccvshop.adapters.adapter_ccv import CCVShopAdapter
+from syncly.adapters.ccv import CCVShopAdapter
 from syncly.clients.ccv.client import CCVClient
-from syncly.clients.ftp.client import InMemoryFTPClient
-from syncly.intergrations.ccvshop.adapters.adapter_mascot import MascotAdapter
-from syncly.config import SynclySettings
+from syncly.clients.ftp import FTPClient
+from syncly.adapters.mascot import MascotAdapter
+from syncly.settings import Settings
 from syncly.helpers import get_env, load_env_files
-from syncly.intergrations.ccvshop.diff import AttributeOrderingDiff
+from syncly.diff import AttributeOrderingDiff
 
-def _create_adapter(settings: SynclySettings, Adapter, client):
+def _create_adapter(settings: Settings, Adapter, client):
     logging.info(f"Setting up {Adapter} adapter...")
     try:
         adapter = Adapter(settings=settings, client=client)
@@ -138,11 +138,11 @@ def handle(args, console):
     if args.config:
         load_env_files(args.config)
 
-    settings = SynclySettings.from_yaml(get_env("SYNCLY_SETTINGS", "settings.yaml"))
+    settings = Settings.from_yaml(get_env("SYNCLY_SETTINGS", "settings.yaml"))
     src = _create_adapter(
         settings,
         MascotAdapter,
-        InMemoryFTPClient(
+        FTPClient(
             host=get_env("MASCOT_FTP_HOST"),
             user=get_env("MASCOT_FTP_USER"),
             password=get_env("MASCOT_FTP_PASSWORD"),
