@@ -1,7 +1,10 @@
 import logging
 from time import sleep
 from typing import cast, Tuple, Dict
+
 from diffsync import Adapter
+
+
 from syncly.helpers import base64_image_from_url
 from syncly.settings import Settings
 from syncly.clients.ccv.client import CCVClient
@@ -206,6 +209,7 @@ class CCVShopAdapter(Adapter):
                     )
 
                     product.add_child(cat_to_dev)
+                    cat_to_dev.model_flags = DiffSyncModelFlags.SKIP_UNMATCHED_DST
 
     def load_attribute_values_to_product(self):
         """Loads in all the attribute Values that are attached to a product"""
