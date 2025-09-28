@@ -4,6 +4,8 @@ import threading
 from abc import abstractmethod
 from concurrent.futures import ThreadPoolExecutor
 from diffsync import Adapter, DiffSyncModel
+from diffsync.enum import DiffSyncModelFlags
+
 from requests.exceptions import RequestException
 from syncly.models.third_party import ThirdPartyProduct
 from typing import Optional, List, Any, Union, Generator, Type, Dict
@@ -100,6 +102,7 @@ class ThirdPartyAdapter(Adapter):
                     "productnumber": product.productnumber,
                 }
             )
+            cat_obj.model_flags = DiffSyncModelFlags.SKIP_UNMATCHED_DST
             self.add_child(product, cat_obj)
 
     # TODO make this a class for mode

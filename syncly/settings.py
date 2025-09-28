@@ -8,6 +8,7 @@ StrDict = Dict[str, Optional[str]]
 
 class CcvShop(BaseModel):
     root_category: str = ""
+    delete_categories: bool = False
     url: str = ""
     color_category: str = ""
     sizing_category: str = ""

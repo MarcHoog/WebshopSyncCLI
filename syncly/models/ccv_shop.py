@@ -171,6 +171,7 @@ class CCVCategoryToDevice(CategoryToDevice):
 
     def delete(self):
         """Delete implementation of CCV Category"""
+
         adapter = cast("CCVShopAdapter", self.adapter)
         if not self.id:
             raise ObjectNotDeleted("Expected exesting object to have an ID")
