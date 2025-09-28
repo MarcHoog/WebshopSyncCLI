@@ -4,3 +4,4 @@ diffsync
 pyyaml
 jinja2
 pandas
+openpyxl
