@@ -3,3 +3,4 @@ pillow
 diffsync
 pyyaml
 jinja2
+pandas

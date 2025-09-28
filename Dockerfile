@@ -21,5 +21,7 @@ RUN pip install --upgrade pip \
 # Copy the rest of the code
 COPY . .
 
+RUN pip install .
+
 # Entrypoint for the CLI
 ENTRYPOINT ["syncly"]
