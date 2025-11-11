@@ -2,31 +2,31 @@ import logging
 import threading
 
 from abc import abstractmethod
+from time import sleep
 from concurrent.futures import ThreadPoolExecutor
 from diffsync import Adapter, DiffSyncModel
 from diffsync.enum import DiffSyncModelFlags
 
 from requests.exceptions import RequestException
-from syncly.models.third_party import ThirdPartyProduct
+from ..models.third_party import ThirdPartyProduct
 from typing import Optional, List, Any, Union, Generator, Type, Dict
 
-from syncly.settings import Settings
-from syncly.models.base import (
+from ..settings import Settings
+from ..models.base import (
     CategoryToDevice,
     AttributeValueToProduct,
     ProductPhoto,
 )
-from syncly.helpers import (
+from ..helpers import (
     normalize_string,
     base64_image_from_url,
-    base64_image_from_url_contain
+    base64_image_from_url_contain,
 )
 
 logger = logging.getLogger(__name__)
 
 
 class ThirdPartyAdapter(Adapter):
-
     _lock = threading.Lock()
 
     product = ThirdPartyProduct
@@ -39,15 +39,16 @@ class ThirdPartyAdapter(Adapter):
     def __str__(self) -> str:
         return "ThirdPartyAdapter"
 
-    def __init__(self, *args,
-        settings:Optional[Settings] = None,
+    def __init__(
+        self,
+        *args,
+        settings: Optional[Settings] = None,
         client: Optional[Any] = None,
-        **kwargs
+        **kwargs,
     ):
-
         self.settings = settings or Settings()
         self.conn = client
-        self.image_mode = 'crop'
+        self.image_mode = "crop"
 
         # Commen mappings
         self.sizing_mapping = self.settings.mapping.size
@@ -60,24 +61,28 @@ class ThirdPartyAdapter(Adapter):
     def _get_products(self) -> Union[List[Type[Dict]], Generator[Type[Dict], Any, Any]]:
         pass
 
-    def process_mapped_attributes(self, product, mapping, product_attrs, attribute_name):
+    def process_mapped_attributes(
+        self, product, mapping, product_attrs, attribute_name
+    ):
         """
         Generalized processing for mapped attributes (e.g., sizing, color).
         """
         for attr in product_attrs:
-            value = mapping.get(attr)
-            if not value:
-                logger.debug(f" No Mapped Attribute {attr} will be used as is")
-                value = attr
+            logger.info(attr)
+            value = mapping.get(attr[0])
+            if value:
+                attr[0] = value
             attr_value, created = self.get_or_instantiate(
                 self.attribute_value_to_product,
                 {
                     "productnumber": product.productnumber,
-                    "attribute": attribute_name,
-                    "value": normalize_string(value)
-                }
+                    "attribute": normalize_string(attribute_name),
+                    "value": normalize_string(attr[0]),
+                    "price": attr[1],
+                },
             )
             if created:
+                logger.info(f"Created attribute value {attr_value}")
                 product.add_child(attr_value)
 
     def process_categories(self, product: ThirdPartyProduct):
@@ -92,7 +97,9 @@ class ThirdPartyAdapter(Adapter):
             if mapped := self.category_mapping.get(cat):
                 categories.append(mapped)
             else:
-                logger.warning(f"Matching product category not found for: {product.category}")
+                logger.warning(
+                    f"Matching product category not found for: {product.category}"
+                )
         categories.extend(self.settings.ccv_shop.additional_categories)
         for category in categories:
             cat_obj, _ = self.get_or_instantiate(
@@ -100,13 +107,12 @@ class ThirdPartyAdapter(Adapter):
                 {
                     "category_name": category,
                     "productnumber": product.productnumber,
-                }
+                },
             )
-            cat_obj.model_flags = DiffSyncModelFlags.SKIP_UNMATCHED_DST
             self.add_child(product, cat_obj)
 
     # TODO make this a class for mode
-    def process_images(self, product: ThirdPartyProduct, mode: str = 'crop'):
+    def process_images(self, product: ThirdPartyProduct, mode: str = "crop"):
         """
         Process and add images to the product.
         """
@@ -115,13 +121,16 @@ class ThirdPartyAdapter(Adapter):
 
         for color, url in product.images:
             if not self.color_mapping.get(color):
-                logger.warning(f"Color {color} cannot be mapped, This image might be for a product that cannot be orderd")
+                logger.warning(
+                    f"Color {color} cannot be mapped, This image might be for a product that cannot be orderd"
+                )
             try:
-
-                if mode == 'crop':
+                if mode == "crop":
                     b64_img = base64_image_from_url(url, (image_width, image_height))
-                elif mode == 'contain':
-                    b64_img = base64_image_from_url_contain(url,(image_width, image_height))
+                elif mode == "contain":
+                    b64_img = base64_image_from_url_contain(
+                        url, (image_width, image_height)
+                    )
                 else:
                     raise ValueError("Unkown proccesing mode")
 
@@ -133,9 +142,9 @@ class ThirdPartyAdapter(Adapter):
                 {
                     "productnumber": product.productnumber,
                     "file_type": "png",
-                    "alttext": url
+                    "alttext": url,
                 },
-                {"source": b64_img}
+                {"source": b64_img},
             )
             if created:
                 self.add_child(product, product_photo)
@@ -151,8 +160,18 @@ class ThirdPartyAdapter(Adapter):
         """
         logger.debug(f"Processing: {product.productnumber}: {product.name}")
         self.process_categories(product)
-        self.process_mapped_attributes(product, self.sizing_mapping, product.sizing, self.settings.ccv_shop.sizing_category)
-        self.process_mapped_attributes(product, self.color_mapping, product.colors, self.settings.ccv_shop.color_category)
+        self.process_mapped_attributes(
+            product,
+            self.sizing_mapping,
+            product.sizing,
+            self.settings.ccv_shop.sizing_category,
+        )
+        self.process_mapped_attributes(
+            product,
+            self.color_mapping,
+            product.colors,
+            self.settings.ccv_shop.color_category,
+        )
         self.process_images(product, self.image_mode)
 
     def add_child(self, parent: DiffSyncModel, child: DiffSyncModel):
@@ -169,5 +188,7 @@ class ThirdPartyAdapter(Adapter):
         This method serves as the entry point for loading products and their associated
         data into the adapter.
         """
-        with ThreadPoolExecutor(max_workers=10) as executor:
-            executor.map(self.process_single_product, self.load_products())
+        # Process products using a worker pool
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            results = executor.map(self.process_single_product, self.load_products())
+            list(results)

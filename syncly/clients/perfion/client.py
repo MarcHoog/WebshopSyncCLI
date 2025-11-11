@@ -1,8 +1,8 @@
 import requests
 from jinja2 import Template
 
-from syncly.clients.perfion.models import PerfionResult
-from syncly.clients.perfion.parsing import perfion_resp_to_dict
+from .models import PerfionResult
+from .parsing import perfion_resp_to_dict
 
 class PerfionClient:
     def __init__(self, api_url: str = "https://perfion.tricorp.com:85/Perfion/GetData.asmx", *args, **kwargs):

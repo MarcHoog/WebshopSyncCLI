@@ -2,9 +2,9 @@ import logging
 
 from typing import cast, Tuple, List
 from requests.exceptions import RequestException
-from syncly.models.third_party import ThirdPartyProduct
-from syncly.helpers import normalize_string, append_if_not_exists, wrap_style
-from syncly.adapters.third_party import ThirdPartyAdapter
+from ..models.third_party import ThirdPartyProduct
+from ..helpers import normalize_string, append_if_not_exists, wrap_style
+from .third_party import ThirdPartyAdapter
 
 logger = logging.getLogger(__name__)
 

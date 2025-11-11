@@ -1,4 +1,4 @@
-from syncly.clients.ccv.api.endpoint import CCVApiEndpoints
+from .endpoint import CCVApiEndpoints
 from typing import Dict, Any
 
 class ProductToCategoryEndpoint(CCVApiEndpoints):

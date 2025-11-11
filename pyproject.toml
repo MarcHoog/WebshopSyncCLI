@@ -22,3 +22,12 @@ include = ["syncly*"]
 
 [project.scripts]
 syncly = "syncly.cli:main"
+
+[tool.basedpyright]
+typeCheckingMode = "strict"
+reportUnreachable = true
+reportPrivateLocalImportUsage = true
+reportUnknownMemberType=false
+reportImplicitRelativeImport = true
+autoImportCompletions = true
+reportAny = false

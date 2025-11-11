@@ -1,0 +1,11 @@
+settings:
+  ccv_shop:
+    root_category: INTERNAL_SYNC_HYDROWEAR
+    url: "https://www.vanorsouw.biz"
+    color_category: "kleuren (hydrowear)"
+    sizing_category: "maten (hydrowear)"
+    image_width: 550
+    image_height: 550
+    aditional_categories:
+      - "Hydrowearwebshop.nl"
+    brand: "Hydrowear"

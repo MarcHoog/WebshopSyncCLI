@@ -1,0 +1,40 @@
+from typing import TypedDict, Optional, List
+
+
+class ProductRow(TypedDict, total=False):
+    brand: Optional[str]
+    name_of_article: Optional[str]
+    article_number: Optional[str]
+    sizes: Optional[str]
+    article_number_size: Optional[str]
+    main_category: Optional[str]
+    model: Optional[str]
+    items_description: Optional[str]
+    colour_nl: Optional[str]
+    colour_de: Optional[str]
+    colour_en: Optional[str]
+    search_colour: Optional[str]
+    article_name_nl: Optional[str]
+    article_name_de: Optional[str]
+    article_name_en: Optional[str]
+    article_description_nl: Optional[str]
+    article_description_de: Optional[str]
+    article_description_en: Optional[str]
+    article_image: Optional[str]
+    tarifnumber: Optional[str]
+    length: Optional[str]
+    width: Optional[str]
+    height: Optional[str]
+    weight: Optional[str]
+    volume: Optional[str]
+    purchase: Optional[str]
+    ean_code_item: Optional[str]
+    quantity: Optional[str]
+    ean_code_full_carton: Optional[str]
+    box_dimensions: Optional[str]
+    country_of_origin: Optional[str]
+    catalog: Optional[str]
+    gross_price: Optional[float]
+
+
+FIELDS: List[str] = list(ProductRow.__annotations__.keys())

@@ -1,8 +1,8 @@
 import os
 from rich.console import Console
-from syncly.clients.ccv.client import CCVClient
-from syncly.settings import Settings
-from syncly.helpers import get_env, load_env_files
+from ....clients.ccv.client import CCVClient
+from ....settings import Settings
+from ....helpers import get_env, load_env_files
 
 
 def add_arguments(parser):

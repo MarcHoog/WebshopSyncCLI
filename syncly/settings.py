@@ -34,8 +34,8 @@ class Perfion(BaseModel):
     excluded_products: List[str] = Field(default_factory=list)
 
 class Mascot(BaseModel):
-    availability: str = ""
-    product_data: str = ""
+    availability: str = "" # THe file path to the availabilty csv
+    product_data: str = "" # The filePath to the Availiability Product data
     excluded_product_types: List[str] = Field(default_factory=list)
 
 class Settings(BaseModel):

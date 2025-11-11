@@ -5,10 +5,10 @@ from typing import cast, Tuple, Dict
 from diffsync import Adapter
 
 
-from syncly.helpers import base64_image_from_url
-from syncly.settings import Settings
-from syncly.clients.ccv.client import CCVClient
-from syncly.models.ccv_shop import (
+from ..helpers import base64_image_from_url
+from ..settings import Settings
+from ..clients.ccv.client import CCVClient
+from ..models.ccv_shop import (
     CCVProduct,
     CCVCategory,
     CCVPackage,
@@ -19,10 +19,11 @@ from syncly.models.ccv_shop import (
     CCVProductPhoto,
     CCVBrand,
 )
-from syncly.helpers import normalize_string
+from ..helpers import normalize_string
 from diffsync.enum import DiffSyncModelFlags
 
 logger = logging.getLogger(__name__)
+
 
 class CCVShopAdapter(Adapter):
     """DiffSync Adapter using requests to communicate to CCVShop"""
@@ -48,7 +49,13 @@ class CCVShopAdapter(Adapter):
     def __str__(self):
         return "CCVShopAdapter"
 
-    def __init__(self, *args, settings: Settings, client: CCVClient, **kwargs,):
+    def __init__(
+        self,
+        *args,
+        settings: Settings,
+        client: CCVClient,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
 
         if not settings.ccv_shop.root_category:
@@ -64,11 +71,14 @@ class CCVShopAdapter(Adapter):
         brand_items = cast(dict, brands.data).get("items") or []
 
         for b in brand_items:
-            brand, _ = cast(Tuple[CCVBrand, bool], self.get_or_instantiate(
-                self.brand,
-                {"name": normalize_string(b.get("name", ""))},
-                {"id": b.get("id")},
-            ))
+            brand, _ = cast(
+                Tuple[CCVBrand, bool],
+                self.get_or_instantiate(
+                    self.brand,
+                    {"name": normalize_string(b.get("name", ""))},
+                    {"id": b.get("id")},
+                ),
+            )
 
             self.brand_map[brand.id] = brand
             brand.model_flags = DiffSyncModelFlags.IGNORE
@@ -79,11 +89,14 @@ class CCVShopAdapter(Adapter):
         package_items = cast(dict, packages.data).get("items") or []
 
         for p in package_items:
-            package, _ = cast(Tuple[CCVPackage, bool], self.get_or_instantiate(
-                self.package,
-                {"name": normalize_string(p.get("name", ""))},
-                {"id": p.get("id")  },
-            ))
+            package, _ = cast(
+                Tuple[CCVPackage, bool],
+                self.get_or_instantiate(
+                    self.package,
+                    {"name": normalize_string(p.get("name", ""))},
+                    {"id": p.get("id")},
+                ),
+            )
 
             self.package_map[package.id] = package
             package.model_flags = DiffSyncModelFlags.IGNORE
@@ -94,11 +107,14 @@ class CCVShopAdapter(Adapter):
 
         for c in category_items:
             if c.get("name", "").strip().lower():
-                category, _ = cast(Tuple[CCVCategory, bool], self.get_or_instantiate(
-                    self.category,
-                    {"name": c.get("name")},
-                    {"id": c.get("id")  },
-                ))
+                category, _ = cast(
+                    Tuple[CCVCategory, bool],
+                    self.get_or_instantiate(
+                        self.category,
+                        {"name": c.get("name")},
+                        {"id": c.get("id")},
+                    ),
+                )
 
                 if category.name == self.settings.ccv_shop.root_category:
                     self.root_category = category
@@ -107,44 +123,56 @@ class CCVShopAdapter(Adapter):
                 category.model_flags = DiffSyncModelFlags.IGNORE
 
     def load_attributes(self):
-
         attributes = self.conn.attributes.get_attributes(total_pages=-1)
         attribute_items = cast(dict, attributes.data).get("items") or []
         for attr in attribute_items:
-            attribute, _ = cast(Tuple[CCVAttribute, bool], self.get_or_instantiate(
-                self.attribute,
-                {"name": normalize_string(attr.get("name"))},
-                {"id": attr.get("id")},
-            ))
+            attribute, _ = cast(
+                Tuple[CCVAttribute, bool],
+                self.get_or_instantiate(
+                    self.attribute,
+                    {"name": normalize_string(attr.get("name"))},
+                    {"id": attr.get("id")},
+                ),
+            )
             self.attribute_map[attribute.id] = attribute
             attribute.model_flags = DiffSyncModelFlags.IGNORE
 
-            attribute_values = self.conn.attributes.get_attribute_values(f"{attribute.id}")
+            attribute_values = self.conn.attributes.get_attribute_values(
+                f"{attribute.id}"
+            )
             value_items = cast(dict, attribute_values.data).get("items") or []
             for val in value_items:
-               value, created = cast(Tuple[CCVAttributeValue, bool], self.get_or_instantiate(
-                   self.attribute_value,
-                   {
-                       "attribute": attribute.name,
-                       "value": normalize_string(val["name"]),
-                   },
-                   {
-                       "id": val["id"],
-                   }
-               ))
+                value, created = cast(
+                    Tuple[CCVAttributeValue, bool],
+                    self.get_or_instantiate(
+                        self.attribute_value,
+                        {
+                            "attribute": attribute.name,
+                            "value": normalize_string(val["name"]),
+                        },
+                        {
+                            "id": val["id"],
+                        },
+                    ),
+                )
 
-               if created:
-                   attribute.add_child(value)
-
+                if created:
+                    attribute.add_child(value)
 
     def load_products(self):
         """Load all articles by calling other methods"""
 
         if not self.root_category:
-            raise ValueError(f"Root category of name {self.settings.ccv_shop.root_category} is not defined")
+            raise ValueError(
+                f"Root category of name {self.settings.ccv_shop.root_category} is not defined"
+            )
 
-        logger.info(f"Gathering products from root category: {self.root_category.name} | {self.root_category.id}")
-        products = self.conn.product.get_products_by_categories(f"{self.root_category.id}", total_pages=-1)
+        logger.info(
+            f"Gathering products from root category: {self.root_category.name} | {self.root_category.id}"
+        )
+        products = self.conn.product.get_products_by_categories(
+            f"{self.root_category.id}", total_pages=-1
+        )
         product_items = cast(dict, products.data).get("items") or []
 
         for item in product_items:
@@ -155,42 +183,50 @@ class CCVShopAdapter(Adapter):
 
             package = self.package_map.get(item["package"]["id"])
             if not package:
-                raise ValueError(f"Package with id {item.get('package_id')} is cannot be found in package map")
+                raise ValueError(
+                    f"Package with id {item.get('package_id')} is cannot be found in package map"
+                )
 
             brand = self.brand_map.get(item["brand"]["id"])
             if not brand:
-                raise ValueError(f"Brand with id {item.get('brand_id')} is cannot be found in brand map")
-
-
+                raise ValueError(
+                    f"Brand with id {item.get('brand_id')} is cannot be found in brand map"
+                )
 
             try:
-                product, _ = cast(Tuple[CCVProduct, bool], self.get_or_instantiate(
-                    self.product,
-                    {
-                        "productnumber": product_number,
-                    },
-                    {
-                    "name": name,
-                    "id": item["id"],
-                    "package": normalize_string(package.name),
-                    "description": item['description'],
-                    "price": item["price"],
-                    "brand": normalize_string(brand.name),
-                    "page_title": item["page_title"],
-                    "meta_description": item["meta_description"],
-                    "meta_keywords": item["meta_keywords"],
-                    },
-                ))
+                product, _ = cast(
+                    Tuple[CCVProduct, bool],
+                    self.get_or_instantiate(
+                        self.product,
+                        {
+                            "productnumber": product_number,
+                        },
+                        {
+                            "name": name,
+                            "id": item["id"],
+                            "package": normalize_string(package.name),
+                            "description": item["description"],
+                            "price": item["price"],
+                            "brand": normalize_string(brand.name),
+                            "page_title": item["page_title"],
+                            "meta_description": item["meta_description"],
+                            "meta_keywords": item["meta_keywords"],
+                        },
+                    ),
+                )
                 self.product_map[product.id] = product
             except KeyError:
                 # TODO: Better logging message
-                logger.error("KeyError while processing product, lickily missing a certain fields")
-
+                logger.error(
+                    "KeyError while processing product, lickily missing a certain fields"
+                )
 
     def load_products_to_category(self):
         """Load all products to category by calling other methods"""
         for cat_id, cat in self.category_map.items():
-            prod_to_cat = self.conn.product_to_category.get_product_to_category(id=cat_id, total_pages=-1)
+            prod_to_cat = self.conn.product_to_category.get_product_to_category(
+                id=cat_id, total_pages=-1
+            )
             prod_to_cat_items = cast(dict, prod_to_cat.data).get("items") or []
             for item in prod_to_cat_items:
                 product = self.product_map.get(item.get("product_id"))
@@ -209,31 +245,32 @@ class CCVShopAdapter(Adapter):
                     )
 
                     product.add_child(cat_to_dev)
-                    cat_to_dev.model_flags = DiffSyncModelFlags.SKIP_UNMATCHED_DST
 
     def load_attribute_values_to_product(self):
         """Loads in all the attribute Values that are attached to a product"""
 
-        products =  cast(list[CCVProduct], self.get_all(self.product))
+        products = cast(list[CCVProduct], self.get_all(self.product))
         if not products:
-            logger.warning("No products have been loaded in the adapter, if this is expected it's not a problem if not you might have loaded in your objects in the wrong order")
+            logger.warning(
+                "No products have been loaded in the adapter, if this is expected it's not a problem if not you might have loaded in your objects in the wrong order"
+            )
             return
 
         for product in products:
             sleep(0.2)  # Rate limiting to avoid hitting API limits
-            result = self.conn.product_to_attribute.get_product_to_attribute_values(f"{product.id}")
+            result = self.conn.product_to_attribute.get_product_to_attribute_values(
+                f"{product.id}"
+            )
             attribute_items = cast(dict, result.data).get("items") or []
             for item in attribute_items:
                 attribute_value_to_product, _ = self.get_or_instantiate(
                     self.attribute_value_to_product,
                     {
                         "productnumber": product.productnumber,
-                        "attribute": normalize_string(item['optionname']),
-                        "value": normalize_string(item["optionvalue_name"])
+                        "attribute": normalize_string(item["optionname"]),
+                        "value": normalize_string(item["optionvalue_name"]),
                     },
-                    {
-                        "id": item["id"]
-                    }
+                    {"id": item["id"]},
                 )
 
                 product.add_child(attribute_value_to_product)
@@ -242,31 +279,32 @@ class CCVShopAdapter(Adapter):
         """Loads in all product photos"""
         products = cast(list[CCVProduct], self.get_all(self.product))
         if not products:
-            logger.warning("No products have been loaded in the adapter, if this is expected it's not a problem if not you might have loaded in your objects in the wrong order")
+            logger.warning(
+                "No products have been loaded in the adapter, if this is expected it's not a problem if not you might have loaded in your objects in the wrong order"
+            )
             return
-
 
         for product in products:
             sleep(0.2)  # Rate limiting to avoid hitting API limits
-            result = self.conn.photos.get_photos(per_page=100, total_pages=-1, id=f"{product.id}")
+            result = self.conn.photos.get_photos(
+                per_page=100, total_pages=-1, id=f"{product.id}"
+            )
             photo_items = cast(dict, result.data).get("items") or []
             for item in photo_items:
                 product_photo, _ = self.get_or_instantiate(
                     self.product_photo,
                     {
                         "productnumber": product.productnumber,
-                        "alttext": item['alttext'],
-                        "file_type": item['deeplink'].split('.')[-1]
+                        "alttext": item["alttext"],
+                        "file_type": item["deeplink"].split(".")[-1],
                     },
                     {
-                        "id": item['id'],
-                        "source": base64_image_from_url(item['deeplink'])
-                    }
+                        "id": item["id"],
+                        "source": base64_image_from_url(item["deeplink"]),
+                    },
                 )
 
                 product.add_child(product_photo)
-
-
 
     def load(self):
         """Load all models by calling other methods"""

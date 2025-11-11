@@ -1,5 +1,5 @@
 """
-CLI command for syncing and diffing data between sources and CCVShop.
+CLI command for syncing and diffing data between HydroWear CSV and CCVShop.
 
 Provides argument parsing, integration setup, and pretty printing of diffs and summaries.
 """
@@ -11,11 +11,12 @@ from diffsync.logging import enable_console_logging
 from diffsync.enum import DiffSyncFlags
 from ....adapters.ccv import CCVShopAdapter
 from ....clients.ccv.client import CCVClient
-from ....clients.ftp import FTPClient
-from ....adapters.mascot import MascotAdapter
+from ....clients.local import LocalFileClient
+from ....adapters.hydrowear import HydroWearAdapter
 from ....settings import Settings, load_settings
 from ....helpers import get_env, load_env_files
 from ....diff import AttributeOrderingDiff
+
 
 def _create_adapter(settings: Settings, Adapter, client):
     logging.info(f"Setting up {Adapter} adapter...")
@@ -24,7 +25,8 @@ def _create_adapter(settings: Settings, Adapter, client):
     except ValueError as e:
         raise e
 
-    return adapter # type: ignore
+    return adapter  # type: ignore
+
 
 def _load(adapter):
     logging.info(f"Loading in data using: {adapter}. ")
@@ -37,13 +39,13 @@ def _load(adapter):
 
 
 def truncate(value):
-
     value = str(value)
 
     if len(value) > 200:
         return f"{value[:200]}..."
 
     return value
+
 
 def render_diff_rich(diff, indent=0):
     """
@@ -68,19 +70,27 @@ def render_diff_rich(diff, indent=0):
             if has_plus and not has_minus:
                 lines.append(Text(f"{ind}  + {child}", style="green"))
                 for attr, value in plus.items():
-                    lines.append(Text(f"{ind}    + {attr}: {truncate(value)}", style="green"))
+                    lines.append(
+                        Text(f"{ind}    + {attr}: {truncate(value)}", style="green")
+                    )
             elif has_minus and not has_plus:
                 lines.append(Text(f"{ind}  - {child}", style="red"))
                 for attr, value in minus.items():
-                    lines.append(Text(f"{ind}    - {attr}: {truncate(value)}", style="red"))
+                    lines.append(
+                        Text(f"{ind}    - {attr}: {truncate(value)}", style="red")
+                    )
             elif not has_plus and not has_minus:
                 lines.append(Text(f"{ind}  * {child}", style="dim"))
             else:
                 lines.append(Text(f"{ind}  ! {child}", style="yellow"))
                 for attr, value in plus.items():
-                    lines.append(Text(f"{ind}    + {attr}: {truncate(value)}", style="green"))
+                    lines.append(
+                        Text(f"{ind}    + {attr}: {truncate(value)}", style="green")
+                    )
                 for attr, value in minus.items():
-                    lines.append(Text(f"{ind}    - {attr}: {truncate(value)}", style="red"))
+                    lines.append(
+                        Text(f"{ind}    - {attr}: {truncate(value)}", style="red")
+                    )
             # Recurse into nested diffs
             child_diffs = {k: v for k, v in child_diffs.items() if k not in ("+", "-")}
             if child_diffs:
@@ -90,6 +100,7 @@ def render_diff_rich(diff, indent=0):
 
 logger = logging.getLogger(__name__)
 
+
 def add_arguments(parser):
     """
     Add CLI arguments for the sync command.
@@ -98,31 +109,31 @@ def add_arguments(parser):
         parser (argparse.ArgumentParser): The argument parser to add arguments to.
     """
     parser.add_argument(
-        "-c", "--config",
-        type=str,
-        help="Path to configuration file",
-        default=None
+        "-c", "--config", type=str, help="Path to configuration file", default=None
     )
 
     parser.add_argument(
-        "-s", "--sync",
+        "-f", "--file", type=str, help="Path to HydroWear CSV/XLSX file", required=True
+    )
+
+    parser.add_argument(
+        "-s",
+        "--sync",
         action="store_true",
         help="Perform sync operation",
-        default=False
+        default=False,
     )
 
     parser.add_argument(
-        "-v", "--verbose",
+        "-v",
+        "--verbose",
         action="count",
         default=0,
-        help="Increase verbosity level (e.g., -v, -vv, -vvv)"
+        help="Increase verbosity level (e.g., -v, -vv, -vvv)",
     )
 
     parser.add_argument(
-        "-o", "--output",
-        type=str,
-        help="Path to output the diff file",
-        default=None
+        "-o", "--output", type=str, help="Path to output the diff file", default=None
     )
 
 
@@ -139,23 +150,20 @@ def handle(args, console):
         load_env_files(args.config)
 
     settings = load_settings(get_env("SYNCLY_SETTINGS", "settings.yaml"))
+
+    # Create HydroWear adapter with LocalFileClient
     src = _create_adapter(
-        settings,
-        MascotAdapter,
-        FTPClient(
-            host=get_env("MASCOT_FTP_HOST"),
-            user=get_env("MASCOT_FTP_USER"),
-            password=get_env("MASCOT_FTP_PASSWORD"),
-        )
+        settings, HydroWearAdapter, LocalFileClient(file_path=args.file)
     )
 
+    # Create CCV Shop adapter
     dst = _create_adapter(
         settings,
         CCVShopAdapter,
         CCVClient(
             get_env("CCVSHOP_PUBLIC_KEY"),
             get_env("CCVSHOP_PRIVATE_KEY"),
-            settings.ccv_shop.url
+            settings.ccv_shop.url,
         ),
     )
 

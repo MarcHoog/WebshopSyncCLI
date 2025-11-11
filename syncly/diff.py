@@ -4,13 +4,13 @@ from typing import Dict, Any
 from collections import defaultdict
 from diffsync.diff import Diff
 
-from syncly.settings import get_settings
-from syncly.helpers import normalize_string
+from .settings import get_settings
+from .helpers import normalize_string
 
 logger = logging.getLogger(__name__)
 
-class AttributeOrderingDiff(Diff):
 
+class AttributeOrderingDiff(Diff):
     @staticmethod
     def _order_sizing_attributes(children: list) -> list:
         """Reorder `children` based on their 'value' key, which represents sizes."""
@@ -36,14 +36,42 @@ class AttributeOrderingDiff(Diff):
             if size.startswith("C") and size[1:].isdigit():
                 return (2, int(size[1:]))
 
+            # Size Example 90C87 (length C circumference)
+            if "C" in size:
+                split_sizes = size.split("C")
+                try:
+                    length = int(split_sizes[0])
+                    circumference = int(split_sizes[1])
+                    return (4, length, circumference)
+                except (ValueError, IndexError):
+                    pass
+
             alpha_order = {
-                "2XS": 90, "XS": 100, "XS/S": 101, "S": 102, "S-M": 103,
-                "M": 104, "M/L": 105, "L": 106, "L-XL": 107,
-                "XL": 108, "X/2XL": 109, "2XL": 110, "2XL-3XL": 111,
-                "3XL": 112, "3/4XL": 113, "3XL-4XL": 114,
-                "4XL": 115, "4XL-5XL": 116,
-                "5XL": 117, "6XL": 118, "7XL": 119, "8XL": 120,
-                "ONE": 200, "ONESIZE": 200,
+                "2XS": 90,
+                "XS": 100,
+                "XS/S": 101,
+                "S": 102,
+                "S-M": 103,
+                "M": 104,
+                "M/L": 105,
+                "L": 106,
+                "L-XL": 107,
+                "XL": 108,
+                "XXL": 109,
+                "X/2XL": 110,
+                "2XL": 111,
+                "2XL-3XL": 112,
+                "3XL": 113,
+                "3/4XL": 114,
+                "3XL-4XL": 115,
+                "4XL": 116,
+                "4XL-5XL": 117,
+                "5XL": 118,
+                "6XL": 119,
+                "7XL": 120,
+                "8XL": 121,
+                "ONE": 200,
+                "ONESIZE": 200,
             }
             if size in alpha_order:
                 return (3, alpha_order[size])
@@ -51,8 +79,6 @@ class AttributeOrderingDiff(Diff):
             return (9, 999, size)
 
         return sorted(children, key=lambda child: parse_size(child.keys.get("value")))
-
-
 
     @staticmethod
     def _order_attributes(reference_order: list, children: list) -> list:
@@ -74,7 +100,7 @@ class AttributeOrderingDiff(Diff):
             val = child.keys.get("value")
             pos = index_of.get(val)
             if pos is None:
-                logger.warning("Unknown value %r, appending to end", val)
+                #                logger.warning("Unknown value %r, appending to end", val)
                 result.append(child)
             else:
                 result[pos] = child
@@ -98,15 +124,16 @@ class AttributeOrderingDiff(Diff):
 
         # Order the 'kleuren' group
         letter_group = attribute_groups.get(settings.ccv_shop.color_category, [])
-        reference = [normalize_string(x) for x in color_mapping.values()] # type: ignore
+        reference = [normalize_string(x) for x in color_mapping.values()]  # type: ignore
         attribute_groups[settings.ccv_shop.color_category] = cls._order_attributes(
-            reference,
-            letter_group
+            reference, letter_group
         )
 
         # Order the 'maten' group
         sizing = attribute_groups.get(settings.ccv_shop.sizing_category, [])
-        attribute_groups[settings.ccv_shop.sizing_category] = cls._order_sizing_attributes(sizing)
+        attribute_groups[settings.ccv_shop.sizing_category] = (
+            cls._order_sizing_attributes(sizing)
+        )
 
         for childs in attribute_groups.values():
             for child in childs:

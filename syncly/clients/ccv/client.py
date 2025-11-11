@@ -2,21 +2,23 @@ import requests
 import logging
 import json
 import time
+from requests.exceptions import ConnectionError, Timeout, RequestException
+from urllib3.exceptions import ProtocolError
 
 from typing import Dict, Optional, Any, Union
-from syncly.clients.ccv.auth import CCVAuth
+from .auth import CCVAuth
 
 # TODO: Consuludate this all into like one __init__ file cause this is a bit "extra"
-from syncly.clients.ccv.api.product import ProductEndpoint
-from syncly.clients.ccv.api.category import CategoryEndpoint
-from syncly.clients.ccv.api.package import PackageEndpoint
-from syncly.clients.ccv.api.product_to_category import ProductToCategoryEndpoint
-from syncly.clients.ccv.api.attributes import AttributesEndpoint
-from syncly.clients.ccv.api.supplier import SupplierEndpoint
-from syncly.clients.ccv.api.product_to_attribute import ProductToAttributeEndpoint
-from syncly.clients.ccv.api.product_photos import ProductPhotoEndpoint
-from syncly.clients.ccv.api.brands import BrandEndpoint
-from syncly.clients.ccv.models import CCVShopResult
+from .api.product import ProductEndpoint
+from .api.category import CategoryEndpoint
+from .api.package import PackageEndpoint
+from .api.product_to_category import ProductToCategoryEndpoint
+from .api.attributes import AttributesEndpoint
+from .api.supplier import SupplierEndpoint
+from .api.product_to_attribute import ProductToAttributeEndpoint
+from .api.product_photos import ProductPhotoEndpoint
+from .api.brands import BrandEndpoint
+from .models import CCVShopResult
 
 logger = logging.getLogger(__name__)
 class CCVClient():
@@ -73,15 +75,43 @@ class CCVClient():
             except json.decoder.JSONDecodeError:
                 raise ValueError(f"Body: {body} couldn't be decoded into json, if you want to send a non decodable body, or raw  ")
 
-        resp = requests.request(
-            url=url,
-            method=method.upper(),
-            params=params,
-            auth=self.auth,
-            headers=self.default_headers,
-            verify=self.verifiy_ssl,
-            data=data or raw
-        )
+        # Try to make the request with connection error handling
+        try:
+            resp = requests.request(
+                url=url,
+                method=method.upper(),
+                params=params,
+                auth=self.auth,
+                headers=self.default_headers,
+                verify=self.verifiy_ssl,
+                data=data or raw
+            )
+        except (ConnectionError, ProtocolError, Timeout) as conn_error:
+            # Handle connection errors with exponential backoff
+            attempt += 1
+            if attempt <= max_attempt:
+                # Exponential backoff: 5s, 10s, 20s
+                wait_time = 5 * (2 ** (attempt - 1))
+                logger.warning(
+                    f"Connection error on attempt {attempt}/{max_attempt}: {type(conn_error).__name__}. "
+                    f"Retrying in {wait_time} seconds..."
+                )
+                time.sleep(wait_time)
+                return self._do(
+                    method,
+                    uri,
+                    params,
+                    body,
+                    raw,
+                    attempt,
+                    max_attempt,
+                    wait_before_retry
+                )
+            else:
+                logger.error(
+                    f"Connection failed after {max_attempt} attempts. Error: {conn_error}"
+                )
+                raise
 
         resp_data = None
         if resp.ok:
@@ -95,24 +125,20 @@ class CCVClient():
 
         if not resp.ok:
             logger.warning(f"Non-2xx response: {resp.status_code} - {resp.text}")
-            if resp.status_code == 429 or resp.status_code == 54:  # Rate-limiting response
+            if resp.status_code == 429:  # Rate-limiting response
                 attempt += 1
-                multiplier = 1
                 if attempt <= max_attempt:  # Retry up to 3 times
-                    if resp.status_code == 429:
-                        logger.info(f"Rate limit hit. Retrying attempt {attempt} after a delay {wait_before_retry} seconds...")
-                    elif resp.status_code == 54:
-                        multiplier = 2
-                        logger.info(f"Connection reset by peer. Retrying attempt {attempt} after a delay {wait_before_retry} seconds...")
-
-                    time.sleep(wait_before_retry * multiplier)
+                    logger.info(f"Rate limit hit. Retrying attempt {attempt} after a delay {wait_before_retry} seconds...")
+                    time.sleep(wait_before_retry)
                     return self._do(
                         method,
                         uri,
                         params,
                         body,
                         raw,
-                        attempt
+                        attempt,
+                        max_attempt,
+                        wait_before_retry
                     )
             try:
                 resp.raise_for_status()

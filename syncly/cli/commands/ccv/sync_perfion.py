@@ -9,13 +9,13 @@ from rich.text import Text
 
 from diffsync.logging import enable_console_logging
 from diffsync.enum import DiffSyncFlags
-from syncly.clients.ccv.client import CCVClient
-from syncly.clients.perfion.client import PerfionClient
-from syncly.adapters.ccv import CCVShopAdapter
-from syncly.diff import AttributeOrderingDiff
-from syncly.settings import Settings, load_settings
-from syncly.adapters.perfion import PerfionAdapter
-from syncly.helpers import get_env, load_env_files
+from ....clients.ccv.client import CCVClient
+from ....clients.perfion.client import PerfionClient
+from ....adapters.ccv import CCVShopAdapter
+from ....diff import AttributeOrderingDiff
+from ....settings import Settings, load_settings
+from ....adapters.perfion import PerfionAdapter
+from ....helpers import get_env, load_env_files
 
 
 

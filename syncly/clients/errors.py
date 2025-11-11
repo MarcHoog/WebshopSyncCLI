@@ -13,3 +13,8 @@ class CcvError(ClientError):
 
 class PerfionError(ClientError):
     pass
+
+
+class LocalFileError(ClientError):
+    """Raised for local file-specific errors."""
+    pass

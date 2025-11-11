@@ -2,9 +2,15 @@ import json
 import logging
 
 from typing import TYPE_CHECKING, cast, Optional
-from diffsync.exceptions import ObjectNotCreated, ObjectNotFound, ObjectNotDeleted, ObjectNotUpdated
+from diffsync.enum import DiffSyncModelFlags
+from diffsync.exceptions import (
+    ObjectNotCreated,
+    ObjectNotFound,
+    ObjectNotDeleted,
+    ObjectNotUpdated,
+)
 
-from syncly.models.base import (
+from .base import (
     Category,
     Product,
     Package,
@@ -14,70 +20,74 @@ from syncly.models.base import (
     AttributeValueToProduct,
     ProductPhoto,
     Brand,
-
 )
 
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
-    from syncly.adapters.ccv import CCVShopAdapter
+    from ..adapters.ccv import CCVShopAdapter
+
 
 class CCVPackage(Package):
-    """ CCV Shop implementation of the Category model"""
+    """CCV Shop implementation of the Category model"""
 
     id: int
+
 
 class CCVBrand(Brand):
-    """ CCV Shop implementation of the Brand model"""
+    """CCV Shop implementation of the Brand model"""
 
     id: int
+
 
 class CCVCategory(Category):
-    """ CCV Shop implementation of the Category model"""
+    """CCV Shop implementation of the Category model"""
 
     id: int
+
 
 class CCVAttribute(Attribute):
-
     id: int
 
-class CCVAttributeValue(AttributeValue):
 
+class CCVAttributeValue(AttributeValue):
     id: int
 
 
 class CCVProduct(Product):
-    """ CCV Shop implementation of the Product model"""
+    """CCV Shop implementation of the Product model"""
 
     id: int
 
     @classmethod
-    def create(cls, adapter: "CCVShopAdapter", ids, attrs): # type: ignore
+    def create(cls, adapter: "CCVShopAdapter", ids, attrs):  # type: ignore
         """Create a Prodct object in CCV Shop."""
         try:
-            package = cast(CCVPackage, adapter.get(CCVPackage, attrs.get("package", "")))
+            package = cast(
+                CCVPackage, adapter.get(CCVPackage, attrs.get("package", ""))
+            )
             brand = cast(CCVBrand, adapter.get(CCVBrand, attrs.get("brand", "")))
         except ObjectNotFound as e:
-            logger.warning(f"Package of {attrs.get('package', '')} or brand of {attrs.get('brand')} not found in Loaded Packages or Brands skipping creation of Product")
+            logger.warning(
+                f"Package of {attrs.get('package', '')} or brand of {attrs.get('brand')} not found in Loaded Packages or Brands skipping creation of Product"
+            )
             raise ObjectNotCreated(e)
 
         product_payload = {
-            'name': attrs["name"],
-            'productnumber' : ids["productnumber"],
-            'description': attrs["description"],
-            'package_id': package.id,
-            'brand_id': brand.id,
-            'price': attrs["price"],
-
-            'page_title': attrs["page_title"],
-            'meta_description': attrs["meta_description"],
-            'meta_keywords': attrs['meta_keywords'],
-
+            "name": attrs["name"],
+            "productnumber": ids["productnumber"],
+            "description": attrs["description"],
+            "package_id": package.id,
+            "brand_id": brand.id,
+            "price": attrs["price"],
+            "page_title": attrs["page_title"],
+            "meta_description": attrs["meta_description"],
+            "meta_keywords": attrs["meta_keywords"],
             # Defaults we don't check Should also be compared but not for now
-            'photo_size': "BIG",
-            'active': False,
-            'discount': 0,
-            'taxtariff': "normal",
+            "photo_size": "BIG",
+            "active": False,
+            "discount": 0,
+            "taxtariff": "normal",
         }
 
         try:
@@ -88,7 +98,7 @@ class CCVProduct(Product):
             raise ObjectNotCreated(e)
 
         data = cast(dict, result.data)
-        attrs['id'] = data['id']
+        attrs["id"] = data["id"]
         return super().create(adapter, ids, attrs)
 
     def update(self, attrs):
@@ -107,7 +117,9 @@ class CCVProduct(Product):
                 brand = cast(CCVBrand, adapter.get(CCVBrand, attrs["brand"]))
 
         except ObjectNotFound as e:
-            logger.warning(f"Package of {attrs.get('package_name', '')} not found in Loaded Packages skipping creation of Product")
+            logger.warning(
+                f"Package of {attrs.get('package_name', '')} not found in Loaded Packages skipping creation of Product"
+            )
             raise ObjectNotUpdated(e)
 
         update_payload = {
@@ -118,10 +130,12 @@ class CCVProduct(Product):
             "price": attrs.get("price", None),
             "page_title": attrs.get("page_title", None),
             "meta_description": attrs.get("meta_description", None),
-            "meta_keywords": attrs.get("meta_keywords", None)
+            "meta_keywords": attrs.get("meta_keywords", None),
         }
 
-        adapter.conn.product.patch_product(f'{self.id}', {k: v for k, v in update_payload.items() if v})
+        adapter.conn.product.patch_product(
+            f"{self.id}", {k: v for k, v in update_payload.items() if v}
+        )
         return super().update(attrs)
 
     def delete(self):
@@ -138,33 +152,37 @@ class CCVProduct(Product):
 
 
 class CCVCategoryToDevice(CategoryToDevice):
-    """ CCV Shop implementation of the Category model"""
+    """CCV Shop implementation of the Category model"""
+
+    model_flags: DiffSyncModelFlags = DiffSyncModelFlags.SKIP_UNMATCHED_DST
 
     id: Optional[int] = None
     category_id: Optional[int] = None
     product_id: Optional[int] = None
 
     @classmethod
-    def create(cls, adapter: "CCVShopAdapter", ids, attrs): #  type: ignore
+    def create(cls, adapter: "CCVShopAdapter", ids, attrs):  #  type: ignore
         productnumber = ids.get("productnumber", "")
-        category_name =  ids.get("category_name", "")
+        category_name = ids.get("category_name", "")
         try:
             product = cast(CCVProduct, adapter.get(CCVProduct, productnumber))
             category = cast(CCVCategory, adapter.get(CCVCategory, category_name))
         except ObjectNotFound as e:
-            logger.error(f"Couldn't find product or category {productnumber} or {category_name}")
+            logger.error(
+                f"Couldn't find product or category {productnumber} or {category_name}"
+            )
             raise ObjectNotCreated(e)
 
-        prod_to_cat_payload = {
-            "product_id": product.id,
-            "category_id": category.id
-        }
-        result = adapter.conn.product_to_category.create_product_to_category(prod_to_cat_payload)
+        prod_to_cat_payload = {"product_id": product.id, "category_id": category.id}
+        result = adapter.conn.product_to_category.create_product_to_category(
+            prod_to_cat_payload
+        )
         data = result.data if result.data else {}
-        attrs.update({
-            "id" : data["id"],
-            "category_id": category.id,
-            "product_id": product.id,
+        attrs.update(
+            {
+                "id": data["id"],
+                "category_id": category.id,
+                "product_id": product.id,
             }
         )
         return super().create(adapter, ids, attrs)
@@ -182,35 +200,99 @@ class CCVCategoryToDevice(CategoryToDevice):
 
         return super().delete()
 
-class CCVAttributeValueToProduct(AttributeValueToProduct):
 
+class CCVAttributeValueToProduct(AttributeValueToProduct):
     id: int
 
     @classmethod
-    def create(cls, adapter: "CCVShopAdapter", ids, attrs): # type: ignore 'Create is compatible'
+    def create(cls, adapter: "CCVShopAdapter", ids, attrs):  # type: ignore 'Create is compatible'
         productnumber = ids.get("productnumber", "")
         attribute = ids.get("attribute", "")
         value = ids.get("value", "")
 
         try:
-            product = cast(CCVProduct, adapter.get(CCVProduct, {"productnumber": productnumber}))
-            attribute_value = cast(CCVAttributeValue, adapter.get(CCVAttributeValue, {"attribute": attribute, "value": value}))
+            product = cast(
+                CCVProduct, adapter.get(CCVProduct, {"productnumber": productnumber})
+            )
         except ObjectNotFound as e:
-            logger.error(f"Could not find product {productnumber }or attribute value {value} {e}")
+            logger.error(
+                f"Could not find product {productnumber}or attribute value {value} {e}"
+            )
             raise ObjectNotCreated(e)
+
+        try:
+            attribute_value = cast(
+                CCVAttributeValue,
+                adapter.get(
+                    CCVAttributeValue, {"attribute": attribute, "value": value}
+                ),
+            )
+        except ObjectNotFound as e:
+            logger.warning(f"Attribute value '{value}' not found for attribute '{attribute}', attempting to create it...")
+
+            try:
+                # Get the attribute object to extract its ID
+                attr_obj = cast(
+                    CCVAttribute, adapter.get(CCVAttribute, {"name": attribute})
+                )
+
+                # Create the attribute value in CCV Shop via API
+                value_body = {
+                    "name": value,
+                    "default_price": attrs.get("price", 0)
+                }
+                logger.info(f"Creating attribute value '{value}' for attribute ID {attr_obj.id} in CCV Shop...")
+                result = adapter.conn.attributes.crate_attribute_value(
+                    str(attr_obj.id), value_body
+                )
+
+                if not result.data or not result.data.get("id"):
+                    logger.error(f"API returned no data when creating attribute value '{value}'")
+                    raise ObjectNotCreated(e)
+
+                # Load the newly created attribute value into the adapter
+                attribute_value, _ = cast(
+                    tuple[CCVAttributeValue, bool],
+                    adapter.get_or_instantiate(
+                        CCVAttributeValue,
+                        {"attribute": attribute, "value": value},
+                        {"id": result.data.get("id")}
+                    )
+                )
+                logger.info(f"Successfully created and loaded attribute value '{value}' with ID {attribute_value.id}")
+
+            except ObjectNotFound as attr_not_found:
+                logger.error(f"Could not find attribute '{attribute}' to create value '{value}': {attr_not_found}")
+                raise ObjectNotCreated(e)
+            except Exception as create_error:
+                logger.error(f"Failed to create attribute value '{value}' for attribute '{attribute}': {create_error}")
+                raise ObjectNotCreated(e)
 
         attr_to_prod_payload = {
             "optionvalue": attribute_value.id,
-            "price": attrs['price'],
+            "price": attrs["price"],
         }
 
-        result = adapter.conn.product_to_attribute.create_product_attribute_values(f"{product.id}", attr_to_prod_payload)
+        result = adapter.conn.product_to_attribute.create_product_attribute_values(
+            f"{product.id}", attr_to_prod_payload
+        )
         data = result.data if result.data else {}
-        attrs.update({
-            "id": data["id"]
-        })
+        attrs.update({"id": data["id"]})
 
         return super().create(adapter, ids, attrs)
+
+    def update(self, attrs):
+        adapter = cast("CCVShopAdapter", self.adapter)
+        if not self.id:
+            raise ObjectNotFound("Expecting existing object to have an ID")
+
+        update_payload = {"price": attrs.get("price", None)}
+
+        adapter.conn.product_to_attribute.patch_product_attribute_value(
+            f"{self.id}", {k: v for k, v in update_payload.items() if v}
+        )
+
+        return super().update(attrs)
 
     def delete(self):
         """Delete implementation of CCV Attribute Value to Product"""
@@ -219,29 +301,29 @@ class CCVAttributeValueToProduct(AttributeValueToProduct):
             raise ObjectNotDeleted("Expected exesting object to have an ID")
 
         try:
-            adapter.conn.product_to_attribute.delete_product_attribute_value(f"{self.id}")
+            adapter.conn.product_to_attribute.delete_product_attribute_value(
+                f"{self.id}"
+            )
         except Exception as e:
             raise ObjectNotDeleted(e)
-
 
         return super().delete()
 
 
-
 class CCVProductPhoto(ProductPhoto):
-
     id: int
 
     @classmethod
-    def create(cls, adapter: "CCVShopAdapter", ids, attrs): # type: ignore 'Create is compatible'
+    def create(cls, adapter: "CCVShopAdapter", ids, attrs):  # type: ignore 'Create is compatible'
         productnumber = ids.get("productnumber", "")
 
         try:
-            product = cast(CCVProduct, adapter.get(CCVProduct, {"productnumber": productnumber}))
+            product = cast(
+                CCVProduct, adapter.get(CCVProduct, {"productnumber": productnumber})
+            )
         except ObjectNotFound as e:
             logger.error("Could not find product or attribute value")
             raise e
-
 
         photo_payload = {
             "file_type": ids["file_type"],
@@ -251,18 +333,17 @@ class CCVProductPhoto(ProductPhoto):
 
         result = adapter.conn.photos.create_photo(f"{product.id}", photo_payload)
         data = result.data if result.data else {}
-        attrs.update({
-            "id": data["id"]
-        })
+        attrs.update({"id": data["id"]})
 
         return super().create(adapter, ids, attrs)
-
-
 
     def update(self, attrs):
         adapter = cast("CCVShopAdapter", self.adapter)
         try:
-            product = cast(CCVProduct, adapter.get(CCVProduct, {"productnumber": self.productnumber}))
+            product = cast(
+                CCVProduct,
+                adapter.get(CCVProduct, {"productnumber": self.productnumber}),
+            )
         except ObjectNotFound as e:
             logger.error("Could not find product or attribute value")
             raise e
@@ -271,14 +352,13 @@ class CCVProductPhoto(ProductPhoto):
         photo_payload = {
             "file_type": self.file_type,
             "alttext": self.alttext,
-            "source": attrs['source'],
+            "source": attrs["source"],
         }
 
-        result = adapter.conn.photos.create_photo(f'{product.id}', photo_payload)
+        result = adapter.conn.photos.create_photo(f"{product.id}", photo_payload)
         data = result.data if result.data else {}
         self.id = data["id"]
         return super().update(attrs)
-
 
     def delete(self):
         """Delete implementation of CCV Attribute Value to Product"""

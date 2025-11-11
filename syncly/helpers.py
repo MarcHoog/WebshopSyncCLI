@@ -1,4 +1,5 @@
 import base64
+from pydantic.types import AnyType
 import requests
 import io
 import pandas as pd
@@ -7,10 +8,11 @@ import logging
 
 from io import BytesIO, StringIO
 from PIL import Image, ImageOps
-from typing import List, Any, Optional, Callable
+from typing import List, Any, Optional, Callable, Tuple
 from pydantic import ValidationError
 
 logger = logging.getLogger(__name__)
+
 
 def normalize_string(string: str):
     """
@@ -18,28 +20,32 @@ def normalize_string(string: str):
     """
     return string.strip().lower()
 
+
 def wrap_style(string: str):
     """
     Wrap a string in HTML span tags for styling.
     """
     return f'<span style="font-size:14px;"><span style="font-family:Verdana,Geneva,sans-serif;">{string}</span></span>'
 
-def append_if_not_exists(item, target_list):
+
+def append_if_not_exists(item: object, target_list: List[Any]):
     """
     Append an item to a list only if it does not already exist.
     """
     if item and item not in target_list:
         target_list.append(item)
 
-def base64_endcode_image(path):
+
+def base64_endcode_image(path: str):
     """
     Encode an image file to a base64 string.
     """
-    with open(path, 'rb') as image_file:
-        encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
+    with open(path, "rb") as image_file:
+        encoded_string = base64.b64encode(image_file.read()).decode("utf-8")
     return encoded_string
 
-def base64_image_from_url(url, target_resolution=(550, 550)):
+
+def base64_image_from_url(url: str, target_resolution: Tuple[int, int] = (550, 550)):
     """
     Download an image from a URL, resize and crop to exactly target_resolution, and encode as base64.
     """
@@ -49,12 +55,13 @@ def base64_image_from_url(url, target_resolution=(550, 550)):
     image = ImageOps.fit(image, target_resolution, Image.Resampling.LANCZOS)
     buffer = io.BytesIO()
     image.save(buffer, format="PNG")
-    return base64.b64encode(buffer.getvalue()).decode('utf-8')
+    return base64.b64encode(buffer.getvalue()).decode("utf-8")
+
 
 def base64_image_from_url_contain(
     url: str,
     target_resolution: tuple[int, int] = (550, 550),
-    background=(255, 255, 255, 0)  # transparent by default
+    background=(255, 255, 255, 0),  # transparent by default
 ) -> str:
     """
     Download an image from a URL, resize to fit inside target_resolution (no crop),
@@ -82,6 +89,7 @@ def base64_image_from_url_contain(
     canvas.save(buf, format="PNG")
     return base64.b64encode(buf.getvalue()).decode("utf-8")
 
+
 def normalize_env_var(name: str) -> str:
     """
     Normalize a string to a valid environment variable format.
@@ -89,31 +97,34 @@ def normalize_env_var(name: str) -> str:
     result = []
     prev_was_sep = False
     for char in name.strip():
-        if char in {' ', '-'}:
+        if char in {" ", "-"}:
             if not prev_was_sep:
-                result.append('_')
+                result.append("_")
                 prev_was_sep = True
-        elif char.isalnum() or char == '_':
+        elif char.isalnum() or char == "_":
             result.append(char)
             prev_was_sep = False
 
-    normalized = ''.join(result)
+    normalized = "".join(result)
     # Ensure it starts with a letter or underscore
     if normalized:
-        if not normalized[0].isalpha() or normalized[0] == '_':
-            normalized = '_' + normalized
+        if not normalized[0].isalpha() or normalized[0] == "_":
+            normalized = "_" + normalized
     return normalized.upper()
 
 
-
-def xlsx_bytes_to_list(data: bytes, sheet: str | int = 0, include_header: bool = True) -> List[List[Any]]:
+def xlsx_bytes_to_list(
+    data: bytes, sheet: str | int = 0, include_header: bool = True
+) -> List[List[Any]]:
     """
     Convert Excel bytes into a list of lists using pandas.
 
     Returns:
         A list of lists where each inner list is a row.
     """
-    df = pd.read_excel(BytesIO(data), sheet_name=sheet, keep_default_na=False, na_values=[])
+    df = pd.read_excel(
+        BytesIO(data), sheet_name=sheet, keep_default_na=False, na_values=[]
+    )
     df = df.replace({"None": None})
 
     if include_header:
@@ -122,21 +133,31 @@ def xlsx_bytes_to_list(data: bytes, sheet: str | int = 0, include_header: bool =
         return df.values.tolist()
 
 
-
-def csv_bytes_to_list(data: bytes, include_header: bool = True, encoding: str = "utf-8", seperator: str = ",") -> List[List[Any]]:
+def csv_bytes_to_list(
+    data: bytes,
+    include_header: bool = True,
+    encoding: str = "utf-8",
+    seperator: str = ",",
+) -> List[List[Any]]:
     """
     Convert CSV bytes into a list of lists using pandas.
 
     Returns:
         A list of lists where each inner list is a row.
     """
-    df = pd.read_csv(StringIO(data.decode(encoding)), sep=seperator, keep_default_na=False, na_values=[])
+    df = pd.read_csv(
+        StringIO(data.decode(encoding)),
+        sep=seperator,
+        keep_default_na=False,
+        na_values=[],
+    )
     df = df.replace({"None": None})
 
     if include_header:
         return [df.columns.tolist()] + df.values.tolist()
     else:
         return df.values.tolist()
+
 
 def load_env_files(*paths: str):
     """
@@ -162,6 +183,7 @@ def load_env_files(*paths: str):
 
     os.environ.update(data)
     return os.environ
+
 
 def get_env(
     key: str,
@@ -199,6 +221,7 @@ def to_float(value: str) -> float:
     # Remove thousand separators and normalize decimal separator
     value = value.replace(".", "").replace(",", ".")
     return float(value)
+
 
 def pretty_validation_error(err: ValidationError) -> None:
     logger.error("Validation failed with the following errors:")

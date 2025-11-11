@@ -1,9 +1,9 @@
 from typing import List, Tuple
-from syncly.models.base import Product
+from .base import Product
+
 
 class ThirdPartyProduct(Product):
-
     category: List[str] = []
-    colors: List[str] = []
-    sizing: List[str] = []
+    colors: List[tuple[str, float]] = []
+    sizing: List[Tuple[str, float]] = []
     images: List[Tuple[str, str]] = []
