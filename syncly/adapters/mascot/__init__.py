@@ -29,7 +29,6 @@ from .models import ProductRow
 from .helpers import (
     parse_product_row,
     create_availability_mapping,
-    is_stocked,
     is_excluded,
     build_name,
     build_description,
@@ -64,8 +63,8 @@ class MascotAdapter(ThirdPartyAdapter):
         return "MascotAdapter"
 
     def should_process_product(self, row: ProductRow) -> bool:
-        """Check if product should be processed based on stock status and exclusion rules."""
-        return is_stocked(row) and not is_excluded(row, self.settings)
+        """Check if product should be processed based on exclusion rules."""
+        return not is_excluded(row, self.settings)
 
     def build_product_ids(self, row: ProductRow) -> dict[str, str]:
         """Extract product identification fields."""
