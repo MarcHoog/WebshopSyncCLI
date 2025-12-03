@@ -31,9 +31,9 @@ def main():
     ccv.create_attribute_set_from_txt.add_arguments(create_attr_parser)
     ccv_parser.set_defaults(func=ccv.create_attribute_set_from_txt.handle)
 
-    #  sync_perfion_parser = ccv_subparsers.add_parser("sync-perfion", help="Syncs between two Sources")
-    #  ccv.sync_perfion.add_arguments(sync_perfion_parser)
-    #  sync_perfion_parser.set_defaults(func=ccv.sync_perfion.handle)
+    sync_perfion_parser = ccv_subparsers.add_parser("sync-perfion", help="Syncs Perfion API to CCV Shop")
+    ccv.sync_perfion.add_arguments(sync_perfion_parser)
+    sync_perfion_parser.set_defaults(func=ccv.sync_perfion.handle)
 
     sync_mascot_parser = ccv_subparsers.add_parser("sync-mascot", help="Syncs between two Sources")
     ccv.sync_mascot.add_arguments(sync_mascot_parser)
@@ -44,6 +44,12 @@ def main():
     )
     ccv.sync_hydrowear.add_arguments(sync_hydrowear_parser)
     sync_hydrowear_parser.set_defaults(func=ccv.sync_hydrowear.handle)
+
+    sync_elten_parser = ccv_subparsers.add_parser(
+        "sync-elten", help="Syncs Elten CSV to CCV Shop"
+    )
+    ccv.sync_elten.add_arguments(sync_elten_parser)
+    sync_elten_parser.set_defaults(func=ccv.sync_elten.handle)
 
     args = parser.parse_args()
     args.func(args, console)

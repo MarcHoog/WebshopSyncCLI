@@ -90,6 +90,36 @@ def base64_image_from_url_contain(
     return base64.b64encode(buf.getvalue()).decode("utf-8")
 
 
+def base64_image_from_file_contain(
+    file_path: str,
+    target_resolution: tuple[int, int] = (550, 550),
+    background=(255, 255, 255, 0),  # transparent by default
+) -> str:
+    """
+    Load an image from a local file path, resize to fit inside target_resolution (no crop),
+    and pad with background to exact size. Encodes result as base64.
+    """
+    img = Image.open(file_path)
+    img = ImageOps.exif_transpose(img)  # fix orientation
+    if img.mode not in ("RGB", "RGBA"):
+        img = img.convert("RGBA")
+
+    W, H = target_resolution
+    fitted = ImageOps.contain(img, (W, H), Image.Resampling.LANCZOS)
+
+    # Create padded canvas
+    canvas_mode = "RGBA" if (len(background) == 4) else "RGB"
+    canvas = Image.new(canvas_mode, (W, H), background)
+
+    x = (W - fitted.width) // 2
+    y = (H - fitted.height) // 2
+    canvas.paste(fitted, (x, y), fitted if fitted.mode == "RGBA" else None)
+
+    buf = io.BytesIO()
+    canvas.save(buf, format="PNG")
+    return base64.b64encode(buf.getvalue()).decode("utf-8")
+
+
 def normalize_env_var(name: str) -> str:
     """
     Normalize a string to a valid environment variable format.

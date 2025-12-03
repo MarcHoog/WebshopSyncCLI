@@ -1,0 +1,9 @@
+settings:
+  ccv_shop:
+    root_category: INTERNAL_SYNC_ELTEN
+    url: "https://www.vanorsouw.biz"
+    color_category: "kleuren (Elten)"
+    sizing_category: "maten (Elten)"
+    image_width: 550
+    image_height: 550
+    brand: "Elten"

@@ -24,6 +24,7 @@ pip-delete-this-directory.txt
 venv/
 env/
 ENV/
+data/
 
 # Unit test / coverage reports
 .coverage
