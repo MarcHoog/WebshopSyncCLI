@@ -32,6 +32,9 @@ from .helpers import (
     build_page_title,
     get_price,
     get_categories,
+    calculate_base_prices,
+    get_base_price,
+    calculate_variant_price,
 )
 from .constants import DEFAULT_PACKAGE
 from ...models.third_party import ThirdPartyProduct
@@ -46,6 +49,10 @@ class PerfionAdapter(ThirdPartyAdapter):
     This adapter connects to the Perfion API to fetch product information
     and transforms them into standardized ThirdPartyProduct objects.
     """
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.price_mapping: dict[str, float] = {}
 
     def __str__(self) -> str:
         return "PerfionAdapter"
@@ -92,7 +99,12 @@ class PerfionAdapter(ThirdPartyAdapter):
         return True
 
     def _get_products(self) -> Generator[ProductRow, Any, Any]:
-        """Fetch products from Perfion API and yield ProductRow dictionaries."""
+        """
+        Fetch products from Perfion API and yield ProductRow dictionaries.
+
+        First fetches all products to calculate base prices (minimum price per ItemNumber),
+        then yields each row for processing.
+        """
         assert self.conn, "Connection must be established before reading products"
 
         try:
@@ -101,9 +113,16 @@ class PerfionAdapter(ThirdPartyAdapter):
             logger.error(f"Failed to contact Perfion API: {err}")
             raise ConnectionError("Unable to connect to Perfion API") from err
 
-        for product_data in result.data:
+        # Convert to list to allow two passes
+        product_data = list(result.data)
+
+        # Calculate base prices (minimum price per ItemNumber) before processing
+        self.price_mapping = calculate_base_prices(product_data)  # type: ignore
+        logger.info(f"Calculated base prices for {len(self.price_mapping)} products")
+
+        for product_row in product_data:
             # Yield product data as ProductRow
-            yield product_data  # type: ignore
+            yield product_row  # type: ignore
 
     def build_product_ids(self, row: ProductRow) -> dict[str, str]:
         """Extract product identification fields."""
@@ -116,7 +135,7 @@ class PerfionAdapter(ThirdPartyAdapter):
         return {
             "name": build_name(row, brand),
             "package": DEFAULT_PACKAGE,
-            "price": get_price(row),
+            "price": get_base_price(row, self.price_mapping),
             "description": wrap_style(build_description(row)),
             "category": get_categories(row),
             "brand": normalize_string(brand),
@@ -144,18 +163,34 @@ class PerfionAdapter(ThirdPartyAdapter):
             raise
 
     def add_variants(self, row: ProductRow, product: ThirdPartyProduct) -> None:
-        """Add color, size, and image variants to product."""
+        """
+        Add color, size, and image variants to product with price differentials.
+
+        Colors typically have no price differential, but sizes may vary in price.
+        """
         color = row.get("ERPColor")
         if color:
-            append_if_not_exists(color, product.colors)
+            # Colors always have 0 price differential (same price for all colors)
+            append_if_not_exists((color, 0.0), product.colors)
+            logger.debug(f"Added color '{color}' to product {product.productnumber}")
 
         size = row.get("TSizeNewDW")
         if size:
-            append_if_not_exists(size, product.sizing)
+            # Calculate price differential for this size variant
+            variant_price = get_price(row)
+            size_price_diff = calculate_variant_price(variant_price, product.price)
+
+            logger.debug(
+                f"Adding size '{size}' variant with price differential {size_price_diff} "
+                f"(variant: {variant_price}, base: {product.price}) to product {product.productnumber}"
+            )
+
+            append_if_not_exists((size, size_price_diff), product.sizing)
 
         image_url = row.get("BaseProductImageUrl")
         if color and image_url:
             append_if_not_exists((color, image_url), product.images)
+            logger.debug(f"Added image for color '{color}' to product {product.productnumber}")
 
     def load_products(self) -> List[ThirdPartyProduct]:
         """
