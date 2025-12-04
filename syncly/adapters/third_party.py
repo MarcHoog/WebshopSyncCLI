@@ -69,15 +69,15 @@ class ThirdPartyAdapter(Adapter):
         """
         for attr in product_attrs:
             logger.info(attr)
-            # Use mapped value if available, otherwise use original value
-            mapped_value = mapping.get(attr[0], attr[0])
-
+            value = mapping.get(attr[0])
+            if value:
+                attr[0] = value
             attr_value, created = self.get_or_instantiate(
                 self.attribute_value_to_product,
                 {
                     "productnumber": product.productnumber,
                     "attribute": normalize_string(attribute_name),
-                    "value": normalize_string(mapped_value),
+                    "value": normalize_string(attr[0]),
                     "price": attr[1],
                 },
             )
