@@ -13,31 +13,30 @@ Data Flow:
 """
 
 import logging
-from typing import List, Any, Generator, Tuple, cast
+from typing import Any, Generator, List, Tuple, cast
+
 from pydantic import ValidationError
 from requests.exceptions import RequestException
 
 from syncly.helpers import (
-    normalize_string,
     append_if_not_exists,
-    wrap_style,
+    normalize_string,
     pretty_validation_error,
+    wrap_style,
 )
+
+from ...models.third_party import ThirdPartyProduct
 from ..third_party import ThirdPartyAdapter
-from .models import ProductRow
+from .constants import DEFAULT_PACKAGE
 from .helpers import (
-    build_name,
     build_description,
     build_meta_description,
+    build_name,
     build_page_title,
-    get_price,
     get_categories,
-    calculate_base_prices,
-    get_base_price,
-    calculate_variant_price,
+    get_price,
 )
-from .constants import DEFAULT_PACKAGE
-from ...models.third_party import ThirdPartyProduct
+from .models import ProductRow
 
 logger = logging.getLogger(__name__)
 
@@ -115,27 +114,20 @@ class PerfionAdapter(ThirdPartyAdapter):
 
         # Convert to list to allow two passes
         product_data = list(result.data)
-
-        # Calculate base prices (minimum price per ItemNumber) before processing
-        self.price_mapping = calculate_base_prices(product_data)  # type: ignore
-        logger.info(f"Calculated base prices for {len(self.price_mapping)} products")
-
         for product_row in product_data:
             # Yield product data as ProductRow
             yield product_row  # type: ignore
 
     def build_product_ids(self, row: ProductRow) -> dict[str, str]:
         """Extract product identification fields."""
-        return {
-            "productnumber": str(row.get("ItemNumber", ""))
-        }
+        return {"productnumber": str(row.get("ItemNumber", ""))}
 
     def build_product_attrs(self, row: ProductRow, brand: str) -> dict[str, Any]:
         """Build product attributes dictionary from row data."""
         return {
             "name": build_name(row, brand),
             "package": DEFAULT_PACKAGE,
-            "price": get_base_price(row, self.price_mapping),
+            "price": get_price(row),
             "description": wrap_style(build_description(row)),
             "category": get_categories(row),
             "brand": normalize_string(brand),
@@ -170,27 +162,24 @@ class PerfionAdapter(ThirdPartyAdapter):
         """
         color = row.get("ERPColor")
         if color:
-            # Colors always have 0 price differential (same price for all colors)
             append_if_not_exists((color, 0.0), product.colors)
             logger.debug(f"Added color '{color}' to product {product.productnumber}")
 
         size = row.get("TSizeNewDW")
         if size:
-            # Calculate price differential for this size variant
             variant_price = get_price(row)
-            size_price_diff = calculate_variant_price(variant_price, product.price)
 
             logger.debug(
-                f"Adding size '{size}' variant with price differential {size_price_diff} "
                 f"(variant: {variant_price}, base: {product.price}) to product {product.productnumber}"
             )
-
-            append_if_not_exists((size, size_price_diff), product.sizing)
+            append_if_not_exists((size, 0.0), product.sizing)
 
         image_url = row.get("BaseProductImageUrl")
         if color and image_url:
             append_if_not_exists((color, image_url), product.images)
-            logger.debug(f"Added image for color '{color}' to product {product.productnumber}")
+            logger.debug(
+                f"Added image for color '{color}' to product {product.productnumber}"
+            )
 
     def load_products(self) -> List[ThirdPartyProduct]:
         """
