@@ -115,7 +115,7 @@ class PerfionAdapter(ThirdPartyAdapter):
         # Convert to list to allow two passes
         product_data = list(result.data)
         for product_row in product_data:
-            # Yield product data as ProductRow
+            logger.debug(f"Processing product: {product_row}")
             yield product_row  # type: ignore
 
     def build_product_ids(self, row: ProductRow) -> dict[str, str]:
