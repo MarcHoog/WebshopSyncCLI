@@ -114,6 +114,7 @@ class PerfionAdapter(ThirdPartyAdapter):
 
         # Convert to list to allow two passes
         product_data = list(result.data)
+        len(product_data)
         for product_row in product_data:
             logger.debug(f"Processing product: {product_row}")
             yield product_row  # type: ignore
