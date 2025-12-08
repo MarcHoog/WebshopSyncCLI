@@ -59,7 +59,7 @@ class PerfionClient:
         return template.render(index=index, per_page=per_page)
 
     # TODO: Item number should do something in the query later on
-    def get_products(self, per_page=100, total_pages=1, item_number=None):
+    def get_products(self, per_page=1000, total_pages=1, item_number=None):
         if total_pages < -1 or total_pages == 0:
             raise (ValueError("Total page cannot be below -1 or 0"))
 
@@ -84,4 +84,6 @@ class PerfionClient:
             if len(results) == data.get("totalCount"):
                 break
 
+        print("HAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH")
+        print(len(results))
         return PerfionResult(status_code=status_code, data=results)

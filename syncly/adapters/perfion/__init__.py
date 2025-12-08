@@ -238,8 +238,8 @@ class PerfionAdapter(ThirdPartyAdapter):
         brand = normalize_string(self.settings.ccv_shop.brand)
 
         for row in self._get_products():
-            if not self.should_process_product(row):
-                continue
+            # if not self.should_process_product(row):
+            #    continue
 
             product = self.create_product(row, brand)
             self.add_variants(row, product)
