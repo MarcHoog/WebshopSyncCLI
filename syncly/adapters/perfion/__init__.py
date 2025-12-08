@@ -97,6 +97,27 @@ class PerfionAdapter(ThirdPartyAdapter):
 
         return True
 
+    def _calculate_base_prices(self, product_data: List[ProductRow]) -> None:
+        """
+        Calculate base prices for all products.
+
+        Base price is the minimum price across all variants of the same ItemNumber.
+        This is used to calculate price differentials for color variants.
+        """
+        for row in product_data:
+            item_number = row.get("ItemNumber")
+            if not item_number:
+                continue
+
+            price = get_price(row)
+            if price <= 0:
+                continue
+
+            # Store minimum price for each ItemNumber
+            if item_number not in self.price_mapping or price < self.price_mapping[item_number]:
+                self.price_mapping[item_number] = price
+                logger.debug(f"Updated base price for {item_number}: {price}")
+
     def _get_products(self) -> Generator[ProductRow, Any, Any]:
         """
         Fetch products from Perfion API and yield ProductRow dictionaries.
@@ -114,7 +135,12 @@ class PerfionAdapter(ThirdPartyAdapter):
 
         # Convert to list to allow two passes
         product_data = list(result.data)
-        len(product_data)
+
+        # First pass: calculate base prices for price differentials
+        self._calculate_base_prices(product_data)
+        logger.info(f"Calculated base prices for {len(self.price_mapping)} products")
+
+        # Second pass: yield products for processing
         for product_row in product_data:
             logger.debug(f"Processing product: {product_row}")
             yield product_row  # type: ignore
@@ -159,21 +185,31 @@ class PerfionAdapter(ThirdPartyAdapter):
         """
         Add color, size, and image variants to product with price differentials.
 
-        Colors typically have no price differential, but sizes may vary in price.
+        For Tricorp:
+        - Colors have price differentials based on the difference from base price
+        - Sizes always have the same price (0.0 differential)
         """
         color = row.get("ERPColor")
         if color:
-            append_if_not_exists((color, 0.0), product.colors)
-            logger.debug(f"Added color '{color}' to product {product.productnumber}")
+            # Calculate color price differential
+            item_number = row.get("ItemNumber", "")
+            base_price = self.price_mapping.get(item_number, 0.0)
+            variant_price = get_price(row)
+
+            # Calculate differential (how much more/less than base price)
+            price_diff = round(variant_price - base_price, 2) if base_price > 0 else 0.0
+
+            append_if_not_exists((color, price_diff), product.colors)
+            logger.debug(
+                f"Added color '{color}' with price differential {price_diff} "
+                f"(variant: {variant_price}, base: {base_price}) to product {product.productnumber}"
+            )
 
         size = row.get("TSizeNewDW")
         if size:
-            variant_price = get_price(row)
-
-            logger.debug(
-                f"(variant: {variant_price}, base: {product.price}) to product {product.productnumber}"
-            )
+            # Sizes have no price differential for Tricorp
             append_if_not_exists((size, 0.0), product.sizing)
+            logger.debug(f"Added size '{size}' to product {product.productnumber}")
 
         image_url = row.get("BaseProductImageUrl")
         if color and image_url:

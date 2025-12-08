@@ -46,6 +46,7 @@ class PerfionClient:
         <From id="100"/>
         <Where>
             <Clause id="Category" operator="HAS"/>
+            <Clause id="stage" operator="=" value="Approved"/>
             <Clause id="ReleaseToERP" operator="=" value="Yes"/>
             <Clause id="ItemStatus" operator="=" value="Voorraad artikel"/>
             <Clause id="ERPCompany" operator="=" value="37904"/>
