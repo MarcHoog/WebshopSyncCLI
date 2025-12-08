@@ -114,7 +114,10 @@ class PerfionAdapter(ThirdPartyAdapter):
                 continue
 
             # Store minimum price for each ItemNumber
-            if item_number not in self.price_mapping or price < self.price_mapping[item_number]:
+            if (
+                item_number not in self.price_mapping
+                or price < self.price_mapping[item_number]
+            ):
                 self.price_mapping[item_number] = price
                 logger.debug(f"Updated base price for {item_number}: {price}")
 
@@ -128,7 +131,7 @@ class PerfionAdapter(ThirdPartyAdapter):
         assert self.conn, "Connection must be established before reading products"
 
         try:
-            result = self.conn.get_products()
+            result = self.conn.get_products(total_pages=-1)
         except RequestException as err:
             logger.error(f"Failed to contact Perfion API: {err}")
             raise ConnectionError("Unable to connect to Perfion API") from err
@@ -201,7 +204,11 @@ class PerfionAdapter(ThirdPartyAdapter):
             variant_price = get_price(row)
 
             # Calculate differential (how much more than base price, always positive)
-            price_diff = max(0.0, round(variant_price - base_price, 2)) if base_price > 0 else 0.0
+            price_diff = (
+                max(0.0, round(variant_price - base_price, 2))
+                if base_price > 0
+                else 0.0
+            )
 
             append_if_not_exists((color, price_diff), product.colors)
             logger.debug(

@@ -1,3 +1,5 @@
+from time import sleep
+
 import requests
 from jinja2 import Template
 
@@ -70,6 +72,8 @@ class PerfionClient:
             paging_params = {"index": start, "per_page": per_page}
 
             result = self._send_query(self.__get_products_query(**paging_params))
+            print(result)
+            sleep(4)
             status_code = result.status_code
             text = result.content.decode("utf-8")
             data = perfion_resp_to_dict(text)  # type: ignore
