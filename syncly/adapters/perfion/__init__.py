@@ -151,10 +151,14 @@ class PerfionAdapter(ThirdPartyAdapter):
 
     def build_product_attrs(self, row: ProductRow, brand: str) -> dict[str, Any]:
         """Build product attributes dictionary from row data."""
+        # Use base price (minimum price) for the product, not the current variant's price
+        item_number = row.get("ItemNumber", "")
+        base_price = self.price_mapping.get(item_number, 0.0)
+
         return {
             "name": build_name(row, brand),
             "package": DEFAULT_PACKAGE,
-            "price": get_price(row),
+            "price": base_price,
             "description": wrap_style(build_description(row)),
             "category": get_categories(row),
             "brand": normalize_string(brand),
@@ -196,8 +200,8 @@ class PerfionAdapter(ThirdPartyAdapter):
             base_price = self.price_mapping.get(item_number, 0.0)
             variant_price = get_price(row)
 
-            # Calculate differential (how much more/less than base price)
-            price_diff = round(variant_price - base_price, 2) if base_price > 0 else 0.0
+            # Calculate differential (how much more than base price, always positive)
+            price_diff = max(0.0, round(variant_price - base_price, 2)) if base_price > 0 else 0.0
 
             append_if_not_exists((color, price_diff), product.colors)
             logger.debug(
